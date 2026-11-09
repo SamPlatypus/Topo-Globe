@@ -1,0 +1,90 @@
+{
+  "results": [
+    {
+      "name": "APK has no INTERNET permission",
+      "ok": true,
+      "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+    },
+    {
+      "name": "phone is in airplane mode",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "menu open at launch with welcome line",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "first tap folds the menu to the dots",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "app opens to the globe",
+      "ok": true,
+      "detail": "{\"p\":\"globe\",\"z\":1.4}"
+    },
+    {
+      "name": "region chosen in the Android file picker",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "region file loads",
+      "ok": true,
+      "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+    },
+    {
+      "name": "tapping the region flies into the 3D map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3D terrain shows",
+      "ok": true,
+      "detail": "pitch 60"
+    },
+    {
+      "name": "10 m contours show",
+      "ok": true,
+      "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+    },
+    {
+      "name": "GPS gets a fix",
+      "ok": true,
+      "detail": "±5 m at -37.85710, 145.35570 (gps)"
+    },
+    {
+      "name": "waypoint drops",
+      "ok": true,
+      "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+    },
+    {
+      "name": "measured line shows its elevation profile",
+      "ok": true,
+      "detail": "2.77 km; ↑349 m ↓79 m"
+    },
+    {
+      "name": "walking route plans",
+      "ok": true,
+      "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+    },
+    {
+      "name": "phone restarted",
+      "ok": true,
+      "detail": "adb reboot; kernel boot id daa48144… → 31b5076e…"
+    },
+    {
+      "name": "still in airplane mode after reboot",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "after a reboot the waypoint is still there",
+      "ok": true,
+      "detail": "waypoints: WP 1; regions: S38E145"
+    }
+  ],
+  "when": "2026-11-09T04:57:11.665Z"
+}

@@ -1,0 +1,80 @@
+{
+  "results": [
+    {
+      "name": "menu open at launch with welcome line",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "first tap folds the menu to the dots",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "opens on the 3D globe",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "region file loads",
+      "ok": true,
+      "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+    },
+    {
+      "name": "tapping the loaded region flies into the 3D map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3D terrain is on",
+      "ok": true,
+      "detail": "pitch 60, zoom 14.2"
+    },
+    {
+      "name": "10 m contours drawn on the device",
+      "ok": true,
+      "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+    },
+    {
+      "name": "tracks and roads shown",
+      "ok": true,
+      "detail": "7502 road/track features"
+    },
+    {
+      "name": "GPS gets a fix",
+      "ok": true,
+      "detail": "±7 m at -37.85710, 145.35570"
+    },
+    {
+      "name": "accuracy circle and position drawn",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "waypoint drops",
+      "ok": true,
+      "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+    },
+    {
+      "name": "measured line shows its elevation profile",
+      "ok": true,
+      "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+    },
+    {
+      "name": "walking route plans",
+      "ok": true,
+      "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+    },
+    {
+      "name": "after a restart the waypoint is still there",
+      "ok": true,
+      "detail": "waypoints: WP 1; regions: S38E145"
+    },
+    {
+      "name": "no network requests to other origins",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "external": []
+}

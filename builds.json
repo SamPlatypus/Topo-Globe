@@ -1,0 +1,406 @@
+{
+  "builds": [
+    {
+      "version": "0.1.6",
+      "file": "apk/topo-globe-0.1.6.apk",
+      "bytes": 4699450,
+      "sha256": "ae984b7e2a16e3ac383e697e89de38a146a41e2f3f54b6c3c6233054ad27405d",
+      "date": "2026-11-09T05:00:29.994Z",
+      "commit": "64cd0d574d05c29cde1c8503c6aca97435c54525",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42564024399",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id daa48144… → 31b5076e…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.6/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.6/android/02-globe.png",
+          "donecheck/0.1.6/android/03-file-picker.png",
+          "donecheck/0.1.6/android/04-region-loaded.png",
+          "donecheck/0.1.6/android/05-terrain-contours.png",
+          "donecheck/0.1.6/android/06-gps-fix.png",
+          "donecheck/0.1.6/android/07-waypoint.png",
+          "donecheck/0.1.6/android/08-measure-profile.png",
+          "donecheck/0.1.6/android/09-route.png",
+          "donecheck/0.1.6/android/10-after-reboot-waypoints.png"
+        ]
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.6/browser/01-welcome-menu.png",
+          "donecheck/0.1.6/browser/02-globe.png",
+          "donecheck/0.1.6/browser/03-region-loaded.png",
+          "donecheck/0.1.6/browser/04-terrain-contours.png",
+          "donecheck/0.1.6/browser/05-gps-fix.png",
+          "donecheck/0.1.6/browser/06-waypoint.png",
+          "donecheck/0.1.6/browser/07-measure-profile.png",
+          "donecheck/0.1.6/browser/08-route.png",
+          "donecheck/0.1.6/browser/09-after-restart-waypoints.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.5",
+      "file": "apk/topo-globe-0.1.5.apk",
+      "bytes": 4699450,
+      "sha256": "ed947026dd4be1e8c955c3275d29d53585a20964b1996ebd747ed6fbfc36f15e",
+      "date": "2026-11-09T04:50:18.044Z",
+      "commit": "c02108f59e1f6516cbba6839138f998920add23e",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42562711584",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "emulator power cycle (cold boot); kernel boot id a9a54fbb… → 90284240…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.5/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.5/android/02-globe.png",
+          "donecheck/0.1.5/android/03-file-picker.png",
+          "donecheck/0.1.5/android/04-region-loaded.png",
+          "donecheck/0.1.5/android/05-terrain-contours.png",
+          "donecheck/0.1.5/android/06-gps-fix.png",
+          "donecheck/0.1.5/android/07-waypoint.png",
+          "donecheck/0.1.5/android/08-measure-profile.png",
+          "donecheck/0.1.5/android/09-route.png",
+          "donecheck/0.1.5/android/10-after-reboot-waypoints.png"
+        ]
+      },
+      "browser": {
+        "status": "failure",
+        "results": null,
+        "shots": [
+          "donecheck/0.1.5/browser/01-welcome-menu.png",
+          "donecheck/0.1.5/browser/02-globe.png",
+          "donecheck/0.1.5/browser/03-region-loaded.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.4",
+      "file": "apk/topo-globe-0.1.4.apk",
+      "bytes": 4699390,
+      "sha256": "a3d4fafc8dd2117de94a6ccd237c5a2b5a5f610510aaaaa5c2d32dd2a3c508fd",
+      "date": "2026-11-09T04:34:21.469Z",
+      "commit": "5007196e90c675659efa3dbd865dc66b4f084df4",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42557209395",
+      "android": {
+        "status": "cancelled",
+        "results": null,
+        "shots": [
+          "donecheck/0.1.4/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.4/android/02-globe.png",
+          "donecheck/0.1.4/android/03-file-picker.png",
+          "donecheck/0.1.4/android/04-region-loaded.png",
+          "donecheck/0.1.4/android/05-terrain-contours.png",
+          "donecheck/0.1.4/android/06-gps-fix.png",
+          "donecheck/0.1.4/android/07-waypoint.png",
+          "donecheck/0.1.4/android/08-measure-profile.png",
+          "donecheck/0.1.4/android/09-route.png"
+        ]
+      },
+      "browser": {
+        "status": "failure",
+        "results": null,
+        "shots": [
+          "donecheck/0.1.4/browser/01-welcome-menu.png",
+          "donecheck/0.1.4/browser/02-globe.png",
+          "donecheck/0.1.4/browser/03-region-loaded.png",
+          "donecheck/0.1.4/browser/04-terrain-contours.png",
+          "donecheck/0.1.4/browser/05-gps-fix.png",
+          "donecheck/0.1.4/browser/06-waypoint.png",
+          "donecheck/0.1.4/browser/07-measure-profile.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.3",
+      "file": "apk/topo-globe-0.1.3.apk",
+      "bytes": 4699346,
+      "sha256": "a6f4442e8126d587534269ce383d2e32e8237e15a72a4d249a33566f9fe0cddb",
+      "date": "2026-11-09T02:13:34.682Z",
+      "commit": "bea764580e0b7eb7777a96e9883212cfd3a40962",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42542792991",
+      "android": {
+        "status": "failure",
+        "results": null,
+        "shots": []
+      },
+      "browser": {
+        "status": "failure",
+        "results": null,
+        "shots": []
+      }
+    },
+    {
+      "version": "0.1.1",
+      "file": "apk/topo-globe-0.1.1.apk",
+      "bytes": 4803406,
+      "sha256": "77f9b4b34a230fc4b1c74b1d7bea615aeac7423abb5ebbb75363ad1f081c2767",
+      "date": "2026-11-09T00:54:22.928Z",
+      "commit": "2536b8cd77458c8950c71cc62d9e7b4f67d9ea4a",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42542356748",
+      "android": {
+        "status": "cancelled",
+        "results": null,
+        "shots": []
+      },
+      "browser": {
+        "status": "cancelled",
+        "results": null,
+        "shots": []
+      }
+    }
+  ]
+}
