@@ -11,7 +11,7 @@
  * `adb shell input tap`; the app state is read through the WebView's DevTools
  * protocol (debug build).  Screenshots are taken with screencap.
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, basename } from 'node:path';
@@ -75,13 +75,39 @@ function findNode(xml, pred) {
 }
 const tapXY = (x, y) => sh(`input tap ${Math.round(x)} ${Math.round(y)}`);
 
-async function waitBoot() {
-  adb('wait-for-device');
-  for (let i = 0; i < 180; i++) {
-    try { if (sh('getprop sys.boot_completed') === '1') return; } catch { /* adb not ready */ }
-    await sleep(2000);
+const getprop = (k) => { try { return execFileSync('adb', ['shell', 'getprop', k], { encoding: 'utf8', timeout: 10000 }).trim(); } catch { return ''; } };
+const bootId = () => { try { return execFileSync('adb', ['shell', 'cat /proc/sys/kernel/random/boot_id'], { encoding: 'utf8', timeout: 10000 }).trim(); } catch { return ''; } };
+
+async function waitBoot(ms = 10 * 60 * 1000, notBootId = '') {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (getprop('sys.boot_completed') === '1') {
+      const id = bootId();
+      if (id && id !== notBootId) return id;
+    }
+    await sleep(3000);
   }
-  throw new Error('device did not boot');
+  return '';
+}
+
+/** Restart the phone; returns how it was restarted.  Proof of a real restart: the kernel boot id changes. */
+async function rebootDevice(beforeId) {
+  let avd = 'test';
+  try { avd = execFileSync('adb', ['emu', 'avd', 'name'], { encoding: 'utf8', timeout: 10000 }).split(/\r?\n/)[0].trim() || avd; } catch { /* keep default */ }
+  log('adb reboot (avd', avd + ')');
+  try { execFileSync('adb', ['reboot'], { timeout: 60000 }); } catch (e) { log('adb reboot returned', e.message.split('\n')[0]); }
+  let id = await waitBoot(7 * 60 * 1000, beforeId);
+  if (id) return { how: 'adb reboot', id };
+  // some emulator images never come back from a guest reboot: power-cycle the virtual device instead
+  log('no boot after adb reboot – power-cycling the emulator (kill + cold boot)');
+  try { execFileSync('adb', ['emu', 'kill'], { timeout: 30000 }); } catch { /* already gone */ }
+  await sleep(15000);
+  const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT || '/usr/local/lib/android/sdk';
+  const emu = spawn(`${sdk}/emulator/emulator`, ['-avd', avd, '-no-window', '-gpu', 'swiftshader_indirect', '-noaudio', '-no-boot-anim', '-no-snapshot'], { detached: true, stdio: 'ignore' });
+  emu.unref();
+  id = await waitBoot(12 * 60 * 1000, beforeId);
+  if (id) return { how: 'emulator power cycle (cold boot)', id };
+  throw new Error('the device did not boot again');
 }
 
 let device, page, view;
@@ -131,7 +157,7 @@ function startFakeGnss(lon, lat, alt) {
 
 try {
   // ------------------------------------------------------------ setup: airplane mode, install, region file in Downloads
-  await waitBoot();
+  await waitBoot(5 * 60 * 1000);
   adb('install', '-r', '-g', apk);
   const perms = sh(`dumpsys package ${PKG}`);
   check('APK has no INTERNET permission', !/android\.permission\.INTERNET/.test(perms), 'requested: ' + (perms.match(/android\.permission\.[A-Z_]+/g) || []).filter((v, i, a) => a.indexOf(v) === i).join(', '));
@@ -260,12 +286,14 @@ try {
 
   // ------------------------------------------------------------ 8. reboot, waypoint still there
   clearInterval(geoTimer);
-  log('rebooting the emulator');
   try { await device.close(); } catch { /* ignore */ }
-  adb('reboot');
-  await sleep(10000);
-  await waitBoot();
+  const before = bootId();
+  const rb = await rebootDevice(before);
+  check('phone restarted', rb.id && rb.id !== before, `${rb.how}; kernel boot id ${before.slice(0, 8)}… → ${rb.id.slice(0, 8)}…`);
   await sleep(15000);
+  // a freshly booted phone shows the (non-secure) lock screen: dismiss it like a user would
+  try { sh('input keyevent 82'); sh('wm dismiss-keyguard'); } catch { /* best effort */ }
+  await sleep(2000);
   check('still in airplane mode after reboot', sh('settings get global airplane_mode_on') === '1');
   await attach();
   await sleep(6000);
