@@ -254,7 +254,8 @@ export class RoadGraph {
     const cs = this.cellSize;
     const cx = Math.floor(x / cs), cy = Math.floor(y / cs);
     const ring = Math.ceil(maxMetres / (cs * Math.min(kx, ky))) + 1;
-    let best: { edge: number; seg: number; t: number; lon: number; lat: number; dist: number } | null = null;
+    type Snap = { edge: number; seg: number; t: number; lon: number; lat: number; dist: number };
+    let best = null as Snap | null;
     const seen = new Set<number>();
     for (let r = 0; r <= ring; r++) {
       for (let dy = -r; dy <= r; dy++) {
