@@ -35,12 +35,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install tools
@@ -84,7 +84,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --title "Victoria regions (v1)" --target "${{ github.sha }}" --notes-file pipeline/RELEASE_NOTES.md
+            # The workflow token may not create a tag on a commit that contains workflow files,
+            # so the release tag points at a small standalone commit holding just the release notes.
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+              TARGET=""
+            else
+              BLOB=$(gh api "repos/${GITHUB_REPOSITORY}/git/blobs" -f content="$(cat pipeline/RELEASE_NOTES.md)" -f encoding=utf-8 --jq .sha)
+              TREE=$(gh api "repos/${GITHUB_REPOSITORY}/git/trees" -f 'tree[][path]=README.md' -f 'tree[][mode]=100644' -f 'tree[][type]=blob' -f "tree[][sha]=${BLOB}" --jq .sha)
+              TARGET=$(gh api "repos/${GITHUB_REPOSITORY}/git/commits" -f message="Victoria region files (v1), built from ${GITHUB_SHA}" -f tree="${TREE}" --jq .sha)
+              echo "Release tag target: ${TARGET}"
+            fi
+            gh release create "$RELEASE_TAG" --title "Victoria regions (v1)" ${TARGET:+--target "$TARGET"} --notes-file pipeline/RELEASE_NOTES.md
           fi
           gh release upload "$RELEASE_TAG" dist-regions/*.topo --clobber
           # merge this run's index into the release index
@@ -92,7 +102,7 @@ jobs:
           node pipeline/region_index.mjs --merge old-index.json dist-regions/regions-index.json > merged-index.json
           cp merged-index.json dist-regions/regions-index.json
           gh release upload "$RELEASE_TAG" dist-regions/regions-index.json --clobber
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: regions
           path: dist-regions/regions-index.json

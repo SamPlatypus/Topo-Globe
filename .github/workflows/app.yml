@@ -6,9 +6,6 @@ name: App
 on:
   push:
   workflow_dispatch:
-  workflow_run:
-    workflows: [Regions]
-    types: [completed]
 
 permissions:
   contents: write

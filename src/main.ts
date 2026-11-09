@@ -263,8 +263,7 @@ async function loadRegionIntoWorkers(stored: P.StoredRegion, bytes: ArrayBuffer 
   return results[0];
 }
 
-async function restoreRegions(): Promise<void> {
-  const list = await P.listStoredRegions().catch(() => [] as P.StoredRegion[]);
+async function restoreRegions(list: P.StoredRegion[]): Promise<void> {
   for (const s of list) {
     try {
       const bytes = await P.readStoredRegion(s);
@@ -931,12 +930,20 @@ async function boot(): Promise<void> {
   renderMenu('main');
   menuEl.classList.add('open');
   await Promise.all([loadSettings(), loadWaypoints()]);
-  showStatus('Loading regions…');
-  await restoreRegions();
-  hideStatus();
+  // show the globe straight away; stored regions are attached as soon as the workers have them
   createMap();
-  renderMenu('main');
   (window as unknown as { __map: unknown }).__map = map;
+  const stored = await P.listStoredRegions().catch(() => [] as P.StoredRegion[]);
+  if (stored.length) {
+    showStatus('Loading regions…');
+    await restoreRegions(stored);
+    hideStatus();
+    if (state.regions.size) {
+      if (styleReady) rebuildStyle();
+      else map.once('load', () => rebuildStyle());
+    }
+  }
+  renderMenu(menuPage);
 }
 
 void boot();
