@@ -1,0 +1,98 @@
+name: Regions
+
+# Builds Victorian region files (.topo) from Copernicus GLO-30, Vicmap Hydro and
+# OpenStreetMap, and posts them as downloads on the "regions-v1" release.
+on:
+  workflow_dispatch:
+    inputs:
+      regions:
+        description: 'Region ids (space separated), or "all" for every Victorian region'
+        default: 'S38E145'
+        required: true
+  push:
+    paths:
+      - 'pipeline/**'
+      - 'src/shared/demcodec.ts'
+      - 'src/shared/vectorcodec.ts'
+      - 'src/shared/regionfile.ts'
+      - 'src/shared/rangecoder.ts'
+      - 'src/shared/intcoder.ts'
+      - 'src/shared/credits.ts'
+      - '.github/workflows/regions.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regions-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: regions-v1
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q osmium-tool
+          python -m pip install --quiet -r pipeline/requirements.txt
+          npm ci --no-audit --no-fund
+      - name: Which regions
+        id: ids
+        run: |
+          IDS="${{ github.event.inputs.regions }}"
+          if [ -z "$IDS" ]; then IDS="S38E145"; fi
+          if [ "$IDS" = "all" ]; then IDS=$(grep -o "id: 'S[0-9]*E[0-9]*'" src/shared/regions-vic.ts | grep -o "S[0-9]*E[0-9]*" | tr '\n' ' '); fi
+          echo "ids=$IDS" >> "$GITHUB_OUTPUT"
+          echo "Building: $IDS"
+      - name: Download OpenStreetMap (Australia)
+        run: |
+          mkdir -p work
+          for i in 1 2 3 4; do
+            curl -fsSL --retry 3 -o work/australia-latest.osm.pbf https://download.geofabrik.de/australia-oceania/australia-latest.osm.pbf && break
+            echo "Geofabrik attempt $i failed; trying the OpenStreetMap France mirror"
+            curl -fsSL --retry 3 -o work/australia-latest.osm.pbf https://download.openstreetmap.fr/extracts/oceania/australia-latest.osm.pbf && break
+            sleep $((i * 30))
+          done
+          ls -la work/australia-latest.osm.pbf
+          osmium fileinfo -e work/australia-latest.osm.pbf | grep -E "Timestamp|Number of" | head -8 || true
+          echo "OSM_DATE=$(osmium fileinfo -g header.option.osmosis_replication_timestamp work/australia-latest.osm.pbf 2>/dev/null || date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+      - name: Build regions
+        run: |
+          mkdir -p dist-regions
+          for id in ${{ steps.ids.outputs.ids }}; do
+            python pipeline/build_region.py --id "$id" --osm work/australia-latest.osm.pbf --osm-date "$OSM_DATE" --work work --out dist-regions
+            rm -rf "work/$id"
+          done
+          ls -la dist-regions
+      - name: Region index
+        run: node pipeline/region_index.mjs dist-regions > dist-regions/regions-index.json && cat dist-regions/regions-index.json
+      - name: Publish to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --title "Victoria regions (v1)" --target "${{ github.sha }}" --notes-file pipeline/RELEASE_NOTES.md
+          fi
+          gh release upload "$RELEASE_TAG" dist-regions/*.topo --clobber
+          # merge this run's index into the release index
+          gh release download "$RELEASE_TAG" -p regions-index.json -O old-index.json 2>/dev/null || echo '{"regions":[]}' > old-index.json
+          node pipeline/region_index.mjs --merge old-index.json dist-regions/regions-index.json > merged-index.json
+          cp merged-index.json dist-regions/regions-index.json
+          gh release upload "$RELEASE_TAG" dist-regions/regions-index.json --clobber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regions
+          path: dist-regions/regions-index.json

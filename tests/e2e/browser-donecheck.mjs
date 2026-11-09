@@ -134,7 +134,7 @@ await tapMap(page, 145.367, -37.858);
 await page.waitForFunction(() => {
   const m = window.__topo.measure;
   // wait for the profile of all three points (the previous two-point profile may still be showing)
-  return m.pts.length === 3 && m.profile && m.profile.stats.distance > 1.5 * Math.max(1, m.profile.dist.length && 0) + 2000;
+  return m.pts.length === 3 && m.profile && m.profile.stats.distance > 2000;
 }, null, { timeout: 60000 });
 const prof = await page.evaluate(() => ({ n: window.__topo.measure.profile.dist.length, st: window.__topo.measure.profile.stats, text: document.querySelector('#sheet h2')?.textContent }));
 check('measured line shows its elevation profile', prof.n > 50 && (await page.isVisible('#profile')),

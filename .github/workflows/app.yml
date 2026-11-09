@@ -1,0 +1,203 @@
+name: App
+
+# Test, build the Android test APK, run the done-check (browser + Android
+# emulator in airplane mode with a reboot), and publish the APK on the
+# GitHub Pages download page.
+on:
+  push:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Regions]
+    types: [completed]
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RELEASE_TAG: regions-v1
+  SAMPLE_REGION: S38E145
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - id: ver
+        run: echo "version=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Unit tests (codecs, geodesy, MGA2020, WMM2025, contours, Tobler, A*)
+        run: npm test
+      - name: Build web app
+        run: npx vite build
+      - name: Check the bundle makes no network calls
+        run: |
+          # every URL scheme other than the app's own must be absent from the shipped code paths
+          if grep -R -o -E "fetch\(['\"]https?://" dist/ ; then echo "::error::remote fetch found"; exit 1; fi
+          grep -q "default-src 'self'" dist/index.html
+      - name: Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" >/dev/null
+      - name: Build APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: ${{ steps.ver.outputs.version }}
+        run: |
+          npx cap sync android
+          cd android && ./gradlew assembleDebug --no-daemon -q
+          cp app/build/outputs/apk/debug/app-debug.apk "../topo-globe-${VERSION_NAME}.apk"
+      - name: Verify APK permissions (no INTERNET)
+        run: |
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)
+          $AAPT dump permissions topo-globe-*.apk | tee perms.txt
+          if grep -q "android.permission.INTERNET" perms.txt; then echo "::error::INTERNET permission present"; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: topo-globe-*.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist
+
+  donecheck-browser:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: web
+          path: dist
+      - name: Wait for the sample region release download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tests/e2e/fetch-region.sh "$RELEASE_TAG" "vic_${SAMPLE_REGION}.topo" work
+      - run: npx playwright install --with-deps chromium
+      - name: Browser done-check (network blocked)
+        run: |
+          node tests/e2e/serve.mjs dist 4173 &
+          sleep 2
+          node tests/e2e/browser-donecheck.mjs http://127.0.0.1:4173/ "work/vic_${SAMPLE_REGION}.topo" donecheck-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: donecheck-browser
+          path: |
+            donecheck-browser/*.png
+            donecheck-browser/results.json
+
+  donecheck-android:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: apk
+      - name: Wait for the sample region release download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tests/e2e/fetch-region.sh "$RELEASE_TAG" "vic_${SAMPLE_REGION}.topo" work
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android emulator done-check (airplane mode, file picker, GPS, reboot)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          ram-size: 4096M
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: node tests/e2e/android-donecheck.mjs apk/$(ls apk | head -1) work/vic_${SAMPLE_REGION}.topo donecheck-android
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: donecheck-android
+          path: donecheck-android
+
+  pages:
+    needs: [build, donecheck-browser, donecheck-android]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Build the download page
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" site || mkdir -p site
+          rm -rf site/.git
+          gh release download "$RELEASE_TAG" -p regions-index.json -O regions-index.json 2>/dev/null || echo '{"regions":[]}' > regions-index.json
+          node scripts/build-pages.mjs --site site --apk artifacts/apk --version "$VERSION" \
+            --commit "${GITHUB_SHA}" --branch "${GITHUB_REF_NAME}" --run "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --android artifacts/donecheck-android --browser artifacts/donecheck-browser \
+            --regions regions-index.json --repo "${GITHUB_REPOSITORY}" --tag "$RELEASE_TAG" \
+            --android-status "${{ needs.donecheck-android.result }}" --browser-status "${{ needs.donecheck-browser.result }}"
+      - name: Push gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          touch .nojekyll
+          git add -A
+          git commit -q -m "Download page for ${{ needs.build.outputs.version }}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+      - name: Make sure GitHub Pages serves gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
+            gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '"Pages: " + .html_url + " (" + (.status // "pending") + ")"'
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" -f "source[branch]=gh-pages" -f "source[path]=/" --jq .html_url \
+              || echo "::warning::Could not enable GitHub Pages automatically. In the repository Settings > Pages, set Source: Deploy from a branch, gh-pages / (root)."
+          fi

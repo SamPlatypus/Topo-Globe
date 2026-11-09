@@ -1,0 +1,4 @@
+numpy==2.5.4
+rasterio==1.5.2
+shapely==2.2.0
+osmium==4.3.2

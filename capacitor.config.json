@@ -1,0 +1,14 @@
+{
+  "appId": "au.topoglobe.app",
+  "appName": "Topo Globe",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": true
+  },
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost"
+  }
+}

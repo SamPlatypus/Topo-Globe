@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --import tsx --test \"tests/unit/**/*.test.ts\"",
     "region:encode": "tsx pipeline/encode_region.ts",
-    "cap:sync": "cap sync android"
+    "cap:sync": "cap sync android",
+    "donecheck:browser": "node tests/e2e/browser-donecheck.mjs",
+    "donecheck:android": "node tests/e2e/android-donecheck.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
@@ -29,6 +31,7 @@
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vite": "8.3.5",
-    "world-atlas": "2.0.2"
+    "world-atlas": "2.0.2",
+    "playwright": "1.64.1"
   }
 }
