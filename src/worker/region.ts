@@ -172,7 +172,15 @@ export class Region {
     const total = this.nbr * this.nbc;
     if (this.ovNext >= total) return false;
     const i = this.ovNext;
-    this.block(Math.floor(i / this.nbc), i % this.nbc); // feeds the overview accumulators
+    const br = Math.floor(i / this.nbc), bc = i % this.nbc;
+    const cached = blockCache.get(`${this.key}/${br}/${bc}`);
+    if (cached) this.feedOverview(br, bc, cached);
+    else {
+      // decode without caching, so the background pass does not evict blocks the visible tiles use
+      const off = this.meta.sections.dem.offset;
+      const offs = this.meta.dem.blockOffsets;
+      this.feedOverview(br, bc, decodeDemBlock(this.meta.dem.params, br, bc, this.buf, off + offs[i], off + offs[i + 1]).data);
+    }
     return !this.ov4;
   }
 

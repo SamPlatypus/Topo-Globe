@@ -115,3 +115,26 @@ test('plate motion: GDA2020 vs ATRF2014 at 2026.85 is ~0.4 m NNE near Melbourne'
   const back = atrfToGda2020(a.lat, a.lon, 2026.85);
   assert.ok(Math.abs(back.lat - g.lat) < 1e-10 && Math.abs(back.lon - g.lon) < 1e-10);
 });
+
+test('routes join across neighbouring regions through their shared boundary node', () => {
+  const S = 50000;
+  const P = (lon: number, lat: number) => [Math.round(lon * S), Math.round(lat * S)];
+  // region A (west of 146 E) and region B (east of it) each hold their half of a track;
+  // both files contain the boundary-crossing segment, so the vertex at 146.0005 appears in both
+  const a: RoadInput = {
+    coords: Int32Array.from([...P(145.99, -37.6), ...P(145.9995, -37.6), ...P(146.0005, -37.6)]),
+    offsets: Uint32Array.from([0, 3]), cls: Uint8Array.from([7]), flags: Uint8Array.from([0]), name: Int32Array.from([0]), names: ['Boundary Track'], n: 1,
+  };
+  const b: RoadInput = {
+    coords: Int32Array.from([...P(145.9995, -37.6), ...P(146.0005, -37.6), ...P(146.01, -37.6)]),
+    offsets: Uint32Array.from([0, 3]), cls: Uint8Array.from([7]), flags: Uint8Array.from([0]), name: Int32Array.from([0]), names: ['Boundary Track'], n: 1,
+  };
+  const g = new RoadGraph([a, b], S, () => 100);
+  const r = g.route(145.99, -37.6, 146.01, -37.6);
+  assert.ok(!('error' in r), JSON.stringify(r));
+  if (!('error' in r)) {
+    assert.ok(r.coords[0][0] < 146 && r.coords[r.coords.length - 1][0] > 146);
+    const metres = r.legs.reduce((s, l) => s + l.metres, 0);
+    assert.ok(Math.abs(metres - 1764) < 15, String(metres)); // 0.02 deg of longitude at 37.6 S
+  }
+});
