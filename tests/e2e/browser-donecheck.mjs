@@ -83,8 +83,23 @@ await idle(page, 20000);
 // software-rendered test browsers are slow: pin the quality level so the frame governor
 // does not flatten the view to 2D during the flight (it would on a real slow phone)
 await page.evaluate(() => window.__gov.pin(1));
-await tapMap(page, 145.5, -37.5);
-await page.waitForFunction(() => window.__map.getZoom() > 10.5 && !window.__map.isMoving(), null, { timeout: 60000 });
+const diag = () => page.evaluate(() => ({
+  zoom: window.__map.getZoom(), pitch: window.__map.getPitch(), moving: window.__map.isMoving(),
+  sheet: document.querySelector('#sheet:not(.hidden) h2')?.textContent ?? null, gov: window.__gov.level,
+}));
+let flew = false;
+for (let attempt = 1; attempt <= 3 && !flew; attempt++) {
+  await tapMap(page, 145.5, -37.5);
+  flew = await page.waitForFunction(() => window.__map.getZoom() > 10.5 && !window.__map.isMoving(), null, { timeout: 180000 })
+    .then(() => true).catch(() => false);
+  if (!flew) {
+    console.log('fly-in attempt', attempt, 'did not finish:', JSON.stringify(await diag()));
+    await shot(page, `03b-fly-attempt-${attempt}.png`);
+    await page.evaluate(() => { document.querySelector('[data-action="close"]')?.click(); window.__map.jumpTo({ center: [145.5, -37.5], zoom: 6.5, pitch: 0, bearing: 0 }); });
+    await idle(page, 30000);
+  }
+}
+if (!flew) throw new Error('could not fly into the region');
 check('tapping the loaded region flies into the 3D map', (await page.evaluate(() => window.__map.getPitch())) > 40);
 await page.evaluate(() => { window.__gov.pin(1); window.__map.jumpTo({ center: [145.355, -37.86], zoom: 14.2, pitch: 60, bearing: 30 }); });
 await idle(page, 60000);

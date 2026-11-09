@@ -282,6 +282,7 @@ try {
   await page.waitForFunction(() => window.__topo.route.result || /No route/.test(document.querySelector('#sheet h2')?.textContent || ''), null, { timeout: 300000 });
   const rt = await page.evaluate(() => ({ ok: !!window.__topo.route.result, h: document.querySelector('#sheet h2')?.textContent, legs: window.__topo.route.result?.legs.slice(0, 5).map((l) => l.name) }));
   check('walking route plans', rt.ok, `${rt.h}; via ${(rt.legs || []).join(' → ')}`);
+  await sleep(3000); // let the software-rendered emulator repaint the result panel
   screencap('09-route.png');
 
   // ------------------------------------------------------------ 8. reboot, waypoint still there
