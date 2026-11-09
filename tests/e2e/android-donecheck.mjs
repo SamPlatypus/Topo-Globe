@@ -21,20 +21,30 @@ const { _android: android } = require('playwright');
 const [apk, region, outDir = 'donecheck-android'] = process.argv.slice(2);
 const PKG = 'au.topoglobe.app';
 mkdirSync(outDir, { recursive: true });
+// whole-run watchdog: report what we have instead of hanging until the CI job timeout
+setTimeout(() => {
+  results.push({ name: 'done-check finished within 55 minutes', ok: false, detail: 'watchdog' });
+  try { writeFileSync(join(outDir, 'results.json'), JSON.stringify({ results, when: new Date().toISOString() }, null, 2)); } catch { /* ignore */ }
+  console.log('WATCHDOG: giving up after 55 minutes');
+  process.exit(1);
+}, 55 * 60 * 1000).unref();
 
 const results = [];
+const t0 = Date.now();
+const stamp = () => `[${((Date.now() - t0) / 1000).toFixed(0).padStart(4)} s]`;
 const check = (name, ok, detail = '') => {
   results.push({ name, ok: !!ok, detail });
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' – ' + detail : ''}`);
+  console.log(`${stamp()} ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' – ' + detail : ''}`);
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8', maxBuffer: 64 << 20 }).trim();
+// every adb call is bounded so a hung command fails the step instead of stalling the job
+const adb = (...args) => execFileSync('adb', args, { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 180000 }).trim();
 const sh = (cmd) => adb('shell', cmd);
-const log = (...a) => console.log('·', ...a);
+const log = (...a) => console.log(stamp(), '·', ...a);
 
 function screencap(name) {
   try {
-    const png = execFileSync('adb', ['exec-out', 'screencap', '-p'], { maxBuffer: 64 << 20 });
+    const png = execFileSync('adb', ['exec-out', 'screencap', '-p'], { maxBuffer: 64 << 20, timeout: 60000 });
     writeFileSync(join(outDir, name), png);
   } catch (e) {
     log('screencap failed', e.message);
@@ -43,7 +53,7 @@ function screencap(name) {
 
 function uiDump() {
   try {
-    sh('rm -f /sdcard/ui.xml; uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true');
+    sh('rm -f /sdcard/ui.xml; timeout 30 uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true');
     return sh('cat /sdcard/ui.xml 2>/dev/null || true');
   } catch {
     return '';
@@ -114,7 +124,7 @@ async function idle(ms = 60000) {
 let geoTimer = null;
 function startFakeGnss(lon, lat, alt) {
   // emulator GNSS: one NMEA fix per second, like a real receiver
-  const send = () => { try { execFileSync('adb', ['emu', 'geo', 'fix', String(lon), String(lat), String(alt), '9']); } catch { /* ignore */ } };
+  const send = () => { try { execFileSync('adb', ['emu', 'geo', 'fix', String(lon), String(lat), String(alt), '9'], { timeout: 10000 }); } catch { /* ignore */ } };
   send();
   geoTimer = setInterval(send, 1000);
 }
@@ -275,7 +285,10 @@ try {
 } finally {
   clearInterval(geoTimer);
   writeFileSync(join(outDir, 'results.json'), JSON.stringify({ results, when: new Date().toISOString() }, null, 2));
-  try { execFileSync('adb', ['logcat', '-d', '-t', '3000'], { maxBuffer: 64 << 20 }); } catch { /* ignore */ }
+  try {
+    const lc = execFileSync('adb', ['logcat', '-d', '-t', '4000'], { maxBuffer: 64 << 20, timeout: 60000, encoding: 'utf8' });
+    writeFileSync(join(outDir, 'logcat.txt'), lc);
+  } catch { /* ignore */ }
 }
 const failed = results.filter((r) => !r.ok);
 console.log(failed.length ? `\n${failed.length} check(s) FAILED` : '\nALL CHECKS PASSED');

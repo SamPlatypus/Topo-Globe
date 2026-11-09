@@ -100,7 +100,12 @@ check('10 m contours drawn on the device', tenMetre, `${t.contours} contour feat
 check('tracks and roads shown', t.roads > 0, `${t.roads} road/track features`);
 await shot(page, '04-terrain-contours.png');
 
-// 4. GPS fix
+// 4. GPS fix – like a real receiver, the emulated GNSS reports a fix every second
+let tick = 0;
+const gnss = setInterval(() => {
+  tick++;
+  ctx.setGeolocation({ latitude: -37.8571 + (tick % 2) * 1e-7, longitude: 145.3557, accuracy: 7 }).catch(() => undefined);
+}, 1000);
 await page.click('#dots');
 await page.click('[data-action="gps"]');
 await page.waitForFunction(() => window.__topo.gps.fix && window.__topo.gps.fix.provider !== 'last-known', null, { timeout: 60000 });
@@ -155,6 +160,7 @@ await shot(page, '08-route.png');
 await page.click('[data-action="r-done"]');
 
 // 8. "reboot": close the browser profile completely and reopen it
+clearInterval(gnss);
 await ctx.close();
 ({ ctx, page } = await open());
 await page.waitForTimeout(4000);
