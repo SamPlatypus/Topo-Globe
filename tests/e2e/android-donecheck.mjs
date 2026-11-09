@@ -43,8 +43,8 @@ function screencap(name) {
 
 function uiDump() {
   try {
-    sh('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true');
-    return sh('cat /sdcard/ui.xml');
+    sh('rm -f /sdcard/ui.xml; uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true');
+    return sh('cat /sdcard/ui.xml 2>/dev/null || true');
   } catch {
     return '';
   }
@@ -82,15 +82,15 @@ async function attach() {
   page = await webview.page();
   page.setDefaultTimeout(120000);
   await page.waitForFunction(() => !!window.__topo, null, { timeout: 180000 });
-  // WebView placement on screen, to convert CSS px to touch coordinates
+  // WebView placement on screen (from the native side), to convert CSS px to touch coordinates
   const dpr = await page.evaluate(() => window.devicePixelRatio);
-  let wv = null;
-  for (let i = 0; i < 10 && !wv; i++) {
-    wv = findNode(uiDump(), (n) => n.cls === 'android.webkit.WebView');
-    if (!wv) await sleep(1000);
+  const vp = await page.evaluate(() => window.__topoNative?.viewportInfo()).catch(() => null);
+  if (vp) view = { dpr, left: vp.left, top: vp.top };
+  else {
+    const wv = findNode(uiDump(), (n) => n.cls === 'android.webkit.WebView');
+    view = { dpr, left: wv ? wv.l : 0, top: wv ? wv.t : 0 };
   }
-  view = { dpr, left: wv ? wv.l : 0, top: wv ? wv.t : 0 };
-  log('webview', JSON.stringify(view));
+  log('webview', JSON.stringify({ ...view, vp }));
 }
 const tapCss = (x, y) => tapXY(view.left + x * view.dpr, view.top + y * view.dpr);
 async function tapSel(sel) {
@@ -157,12 +157,14 @@ try {
     if (file) { tapXY(file.x, file.y); picked = true; break; }
     if (attempt === 0) writeFileSync(join(outDir, 'picker-ui.xml'), xml);
     const roots = findNode(xml, (n) => /show roots/i.test(n.desc));
-    const downloads = findNode(xml, (n) => /^Downloads?$/.test(n.text));
+    // root list entries live in the navigation drawer (resource-id .../roots_list or a TextView titled Downloads)
+    const downloads = findNode(xml, (n) => /^Downloads$/.test(n.text) && !/toolbar|title/i.test(n.id));
     const internal = findNode(xml, (n) => /sdk_gphone|Internal storage|^Pixel/i.test(n.text));
     const dlFolder = findNode(xml, (n) => n.text === 'Download');
-    if (downloads && attempt % 2 === 0) tapXY(downloads.x, downloads.y);
-    else if (dlFolder) tapXY(dlFolder.x, dlFolder.y);
-    else if (internal && attempt > 3) tapXY(internal.x, internal.y);
+    log('picker', JSON.stringify({ attempt, downloads: !!downloads, roots: !!roots, internal: !!internal, dlFolder: !!dlFolder }));
+    if (dlFolder) tapXY(dlFolder.x, dlFolder.y);
+    else if (attempt >= 6 && internal) tapXY(internal.x, internal.y);
+    else if (downloads && attempt < 6) tapXY(downloads.x, downloads.y);
     else if (roots) tapXY(roots.x, roots.y);
   }
   screencap('03-file-picker.png');

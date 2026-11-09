@@ -33,6 +33,8 @@ interface TopoNativePlugin {
   stopGps(): Promise<void>;
   getLastKnown(): Promise<{ lat?: number; lon?: number; accuracy?: number; time?: number }>;
   keepAwake(o: { on: boolean }): Promise<void>;
+  exitApp(): Promise<void>;
+  viewportInfo(): Promise<{ left: number; top: number; width: number; height: number; density: number }>;
   addListener(event: 'location', fn: (f: GpsFix) => void): Promise<PluginListenerHandle>;
   addListener(event: 'gnss', fn: (s: GnssStatus) => void): Promise<PluginListenerHandle>;
   addListener(event: 'gpsError', fn: (e: { reason: string }) => void): Promise<PluginListenerHandle>;
@@ -40,6 +42,8 @@ interface TopoNativePlugin {
 
 export const isNative = Capacitor.isNativePlatform();
 const Native = isNative ? registerPlugin<TopoNativePlugin>('TopoNative') : null;
+// hook for the automated done-check (real taps need the WebView's position on screen)
+(globalThis as unknown as { __topoNative?: unknown }).__topoNative = Native;
 
 // ---------------------------------------------------------------- tiny IndexedDB key-value store (web)
 function idb(): Promise<IDBDatabase> {
@@ -217,4 +221,8 @@ export async function stopGps(): Promise<void> {
 
 export async function keepAwake(on: boolean): Promise<void> {
   if (Native) await Native.keepAwake({ on }).catch(() => undefined);
+}
+
+export async function exitApp(): Promise<void> {
+  if (Native) await Native.exitApp();
 }

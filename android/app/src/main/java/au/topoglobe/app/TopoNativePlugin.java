@@ -410,6 +410,29 @@ public class TopoNativePlugin extends Plugin {
         call.resolve();
     }
 
+    /** Where the WebView sits on screen (device px) – used by the automated done-check to send real taps. */
+    @PluginMethod
+    public void viewportInfo(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            android.view.View v = getBridge().getWebView();
+            int[] loc = new int[2];
+            v.getLocationOnScreen(loc);
+            JSObject r = new JSObject();
+            r.put("left", loc[0]);
+            r.put("top", loc[1]);
+            r.put("width", v.getWidth());
+            r.put("height", v.getHeight());
+            r.put("density", getContext().getResources().getDisplayMetrics().density);
+            call.resolve(r);
+        });
+    }
+
+    @PluginMethod
+    public void exitApp(PluginCall call) {
+        call.resolve();
+        getActivity().runOnUiThread(() -> getActivity().finish());
+    }
+
     @Override
     protected void handleOnDestroy() {
         stopUpdates();

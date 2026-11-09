@@ -766,8 +766,10 @@ sheetEl.addEventListener('click', (e) => {
 // ---------------------------------------------------------------- menu
 type MenuPage = 'main' | 'regions' | 'waypoints' | 'layers' | 'settings';
 let menuOpen = true;
+let menuPage: MenuPage = 'main';
 
 function renderMenu(page: MenuPage = 'main'): void {
+  menuPage = page;
   const s = state.settings;
   let html = '';
   if (page === 'main') {
@@ -891,6 +893,16 @@ menuEl.addEventListener('change', (e) => {
   void saveSettings();
   applyLayerSettings();
   updateTerrain();
+});
+
+// Android back button: close what is open, step back to the globe, then exit.
+window.addEventListener('topoback', () => {
+  if (state.welcome) { state.welcome = false; closeMenu(); renderMenu('main'); return; }
+  if (menuOpen) { if (menuPage !== 'main') openMenu('main'); else closeMenu(); return; }
+  if (state.mode !== 'browse') { endModes(); return; }
+  if (!sheetEl.classList.contains('hidden')) { closeSheet(); return; }
+  if (map && map.getZoom() > 4) { backToGlobe(); return; }
+  void P.exitApp();
 });
 
 // First tap anywhere folds the welcome menu to the dots (and does nothing else).
