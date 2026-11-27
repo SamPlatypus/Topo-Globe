@@ -6,7 +6,7 @@ Offline 3D topographic maps of Victoria for Android (Capacitor). The app opens o
 
 ## Downloads
 
-- Test APKs: the GitHub Pages download page of this repository (`https://samplatypus.github.io/Topo-Globe/`), rebuilt by the **App** workflow on every push together with the automated done-check results.
+- Test APKs: the GitHub Pages download page of this repository (`https://samplatypus.github.io/Topo-Globe/`), rebuilt by the **App** workflow on every push together with the automated done-check results. The workflow deploys the page itself, which needs **Settings → Pages → Source: GitHub Actions** (GitHub does not deploy branch pushes made by a workflow). Every APK is also kept on the `gh-pages` branch, e.g. `https://raw.githubusercontent.com/SamPlatypus/Topo-Globe/gh-pages/apk/topo-globe-0.1.11.apk`.
 - Region files: release **`regions-v1`** (`vic_<ID>.topo`), built by the **Regions** workflow.
 
 ## Regions

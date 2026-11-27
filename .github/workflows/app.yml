@@ -155,6 +155,8 @@ jobs:
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      build_type: ${{ steps.pagescfg.outputs.build_type }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -188,27 +190,49 @@ jobs:
           git add -A
           git commit -q -m "Download page for ${{ needs.build.outputs.version }}"
           git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
-      - name: Make sure GitHub Pages serves gh-pages
+      - name: How GitHub Pages is set up
+        id: pagescfg
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
-            gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '"Pages: " + .html_url + " (" + (.status // "pending") + ")"'
-            # a push made with the workflow token does not start a Pages deployment by itself: request one,
-            # then wait until the live site serves this version (the CDN may lag a few minutes more)
-            gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" --jq '"Pages build requested: " + .status' \
-              || echo "::warning::Could not request a GitHub Pages build"
-            URL=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .html_url)
-            for i in $(seq 1 40); do
-              sleep 15
-              STATE=$(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" --jq .status 2>/dev/null || echo unknown)
-              LIVE=$(curl -fsS "${URL}builds.json?v=${{ needs.build.outputs.version }}-$i" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).builds[0].version)}catch{console.log("?")}})')
-              echo "Pages build: ${STATE}; live site newest APK: ${LIVE}"
-              if [ "$LIVE" = "${{ needs.build.outputs.version }}" ]; then echo "Live: ${URL}"; break; fi
-              if [ "$STATE" = "errored" ]; then echo "::warning::GitHub Pages build errored"; break; fi
-            done
-            [ "$LIVE" = "${{ needs.build.outputs.version }}" ] || echo "::warning::The live download page does not show ${{ needs.build.outputs.version }} yet"
+          if CFG=$(gh api "repos/${GITHUB_REPOSITORY}/pages" 2>/dev/null); then
+            TYPE=$(echo "$CFG" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).build_type||"legacy"))')
+            echo "$CFG" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const c=JSON.parse(s);console.log("Pages: "+c.html_url+" ("+(c.build_type||"legacy")+", "+(c.status||"pending")+")")})'
           else
-            gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" -f "source[branch]=gh-pages" -f "source[path]=/" --jq .html_url \
-              || echo "::warning::Could not enable GitHub Pages automatically. In the repository Settings > Pages, set Source: Deploy from a branch, gh-pages / (root)."
+            TYPE=none
           fi
+          echo "build_type=$TYPE" >> "$GITHUB_OUTPUT"
+          if [ "$TYPE" != "workflow" ]; then
+            # GitHub does not deploy pushes that a workflow makes with its own token, so a
+            # branch-based site keeps showing an old page: the deploy job below needs Pages
+            # set to deploy from GitHub Actions (a one-time repository setting).
+            echo "::warning::The download page cannot go live automatically: in Settings > Pages > Build and deployment, set Source to 'GitHub Actions', then re-run this workflow. (The APK is on the gh-pages branch meanwhile.)"
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    needs: [build, pages]
+    if: always() && needs.pages.result == 'success' && needs.pages.outputs.build_type == 'workflow'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Check the live download page
+        run: |
+          URL="${{ steps.deployment.outputs.page_url }}"
+          for i in $(seq 1 40); do
+            LIVE=$(curl -fsS "${URL}builds.json?v=${{ needs.build.outputs.version }}-$i" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).builds[0].version)}catch{console.log("?")}})')
+            echo "live download page, newest APK: ${LIVE}"
+            if [ "$LIVE" = "${{ needs.build.outputs.version }}" ]; then echo "Live: ${URL}"; exit 0; fi
+            sleep 15
+          done
+          echo "::warning::The live download page does not show ${{ needs.build.outputs.version }} yet (CDN delay?)"
