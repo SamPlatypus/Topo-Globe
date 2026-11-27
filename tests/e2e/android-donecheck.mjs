@@ -138,17 +138,19 @@ async function tapMap(lon, lat) {
   const p = await page.evaluate(([lo, la]) => { const q = window.__map.project([lo, la]); return { x: q.x, y: q.y }; }, [lon, lat]);
   tapCss(p.x, p.y);
 }
-/** Tap the map and wait until `count()` (evaluated in the page) grows; on a loaded emulator an
- *  `input tap` is now and then delivered as a long press, so retry once and log it. */
+/** Tap the map and wait until `count()` (evaluated in the page) grows.  The software-rendered
+ *  emulator can take many seconds to deliver a tap, so wait patiently; only a tap that never
+ *  arrives (an `input tap` delivered as a long press) is repeated, once, and logged. */
 async function tapMapCounted(lon, lat, count) {
   const before = await page.evaluate(count);
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await tapMap(lon, lat);
-    const ok = await page.waitForFunction(([c, b]) => (0, eval)(c)() > b, [count.toString(), before], { timeout: 8000 }).then(() => true, () => false);
-    if (ok) return;
-    log(`map tap at ${lon}, ${lat} not registered (attempt ${attempt})`);
-  }
-  throw new Error(`map tap at ${lon}, ${lat} not registered after 2 attempts`);
+  const grew = (ms) => page.waitForFunction(([c, b]) => (0, eval)(c)() > b, [count.toString(), before], { timeout: ms }).then(() => true, () => false);
+  await tapMap(lon, lat);
+  if (await grew(45000)) return;
+  await sleep(3000);
+  if ((await page.evaluate(count)) > before) return; // arrived late after all
+  log(`map tap at ${lon}, ${lat} not registered after 48 s, tapping again`);
+  await tapMap(lon, lat);
+  if (!(await grew(45000))) throw new Error(`map tap at ${lon}, ${lat} not registered after 2 attempts`);
 }
 async function idle(ms = 60000) {
   await page.evaluate((t) => new Promise((res) => {
