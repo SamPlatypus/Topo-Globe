@@ -138,6 +138,18 @@ async function tapMap(lon, lat) {
   const p = await page.evaluate(([lo, la]) => { const q = window.__map.project([lo, la]); return { x: q.x, y: q.y }; }, [lon, lat]);
   tapCss(p.x, p.y);
 }
+/** Tap the map and wait until `count()` (evaluated in the page) grows; on a loaded emulator an
+ *  `input tap` is now and then delivered as a long press, so retry once and log it. */
+async function tapMapCounted(lon, lat, count) {
+  const before = await page.evaluate(count);
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    await tapMap(lon, lat);
+    const ok = await page.waitForFunction(([c, b]) => (0, eval)(c)() > b, [count.toString(), before], { timeout: 8000 }).then(() => true, () => false);
+    if (ok) return;
+    log(`map tap at ${lon}, ${lat} not registered (attempt ${attempt})`);
+  }
+  throw new Error(`map tap at ${lon}, ${lat} not registered after 2 attempts`);
+}
 async function idle(ms = 60000) {
   await page.evaluate((t) => new Promise((res) => {
     const m = window.__map;
@@ -261,11 +273,12 @@ try {
   await sleep(800);
   await tapSel('[data-action="measure"]');
   await sleep(1000);
-  await tapMap(145.343, -37.858);
-  await sleep(1500);
-  await tapMap(145.355, -37.866);
-  await sleep(2500);
-  await tapMap(145.367, -37.858);
+  const measured = () => window.__topo.measure.pts.length;
+  await tapMapCounted(145.343, -37.858, measured);
+  await sleep(1000);
+  await tapMapCounted(145.355, -37.866, measured);
+  await sleep(2000);
+  await tapMapCounted(145.367, -37.858, measured);
   await page.waitForFunction(() => { const m = window.__topo.measure; return m.pts.length === 3 && m.profile && m.profile.stats.distance > 2000; }, null, { timeout: 120000 });
   const pr = await page.evaluate(() => ({ n: window.__topo.measure.profile.dist.length, st: window.__topo.measure.profile.stats, h: document.querySelector('#sheet h2')?.textContent }));
   check('measured line shows its elevation profile', pr.n > 50 && (await page.isVisible('#profile')), `${pr.h}; ↑${Math.round(pr.st.ascent)} m ↓${Math.round(pr.st.descent)} m`);
@@ -278,7 +291,7 @@ try {
   await sleep(800);
   await tapSel('[data-action="route"]');
   await sleep(1500);
-  await tapMap(145.3745, -37.8722);
+  await tapMapCounted(145.3745, -37.8722, () => (window.__topo.route.to ? 1 : 0));
   await page.waitForFunction(() => window.__topo.route.result || /No route/.test(document.querySelector('#sheet h2')?.textContent || ''), null, { timeout: 300000 });
   const rt = await page.evaluate(() => ({ ok: !!window.__topo.route.result, h: document.querySelector('#sheet h2')?.textContent, legs: window.__topo.route.result?.legs.slice(0, 5).map((l) => l.name) }));
   check('walking route plans', rt.ok, `${rt.h}; via ${(rt.legs || []).join(' → ')}`);
