@@ -2,7 +2,7 @@
 import type { Region } from './region';
 import { marchingSquares, simplifyLine, contourIntervals } from '../shared/calc/contours';
 import { encodeTile, clipLine, clipRing, ringArea, EXTENT, type MvtFeature, type MvtLayer } from '../shared/mvt';
-import { RC, WC, PT } from '../shared/vectorcodec';
+import { RC, WC, PT, AC } from '../shared/vectorcodec';
 
 export const TILE = 256;
 const BUF = 64; // tile buffer in extent units
@@ -274,6 +274,8 @@ export function vectorTile(world: World, z: number, x: number, y: number): Uint8
       for (let i = 0; i < A.n; i++) {
         const bb = i * 4;
         if (A.bbox[bb + 2] < bx0 || A.bbox[bb] > bx1 || A.bbox[bb + 3] < by0 || A.bbox[bb + 1] > by1) continue;
+        // class 1 is the sea only in files that carry their own coastline; earlier it was a pondage
+        const cls = A.cls[i] === AC.SEA && !reg.meta.vec.sea ? AC.LAKE : A.cls[i];
         const rings: number[][] = [];
         for (let rr = A.featRings[i]; rr < A.featRings[i + 1]; rr++) {
           let ring = project(A.coords, A.ringOffsets[rr], A.ringOffsets[rr + 1]);
@@ -281,7 +283,8 @@ export function vectorTile(world: World, z: number, x: number, y: number): Uint8
           if (ring.length < 6) { if (rr === A.featRings[i]) break; continue; }
           const ar = ringArea(ring);
           const outer = rr === A.featRings[i];
-          if (outer && Math.abs(ar) < minArea) break;
+          // small water bodies drop out at low zoom; sea pieces never do (they tile the sea)
+          if (outer && cls !== AC.SEA && Math.abs(ar) < minArea) break;
           // MVT: exterior rings clockwise in screen space (positive area), holes negative
           if ((outer && ar < 0) || (!outer && ar > 0)) {
             const rev: number[] = [];
@@ -291,7 +294,7 @@ export function vectorTile(world: World, z: number, x: number, y: number): Uint8
           rings.push(ring);
         }
         if (!rings.length) continue;
-        const props: Record<string, string | number | boolean> = { cls: A.cls[i] };
+        const props: Record<string, string | number | boolean> = { cls };
         if (A.name[i] >= 0) props.name = names[A.name[i]];
         areas.push({ type: 3, geom: rings, props });
       }

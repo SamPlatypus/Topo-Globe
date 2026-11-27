@@ -17,6 +17,7 @@ Victoria is split into 40 one-degree cells (about 88 × 111 km), aligned with th
 |---|---|---|
 | Elevation | Copernicus DEM GLO-30, full 1″ grid (3601 × 3601 incl. shared edges) | TGD1: 8-neighbour predictor + slope-adaptive quantisation (0.5 m on ground flatter than 1:6, 1 m to 1:3, 2 m steeper → contour lines move ≤ 3 m) + context-modelled binary range coding, in independent 240 × 240 blocks |
 | Roads, tracks, paths, walker POIs | OpenStreetMap (Geofabrik Australia extract) | TGV1: junction-preserving chains, Douglas-Peucker 2 m, 2e-5° grid, delta + range coding in 8 × 8 chunks |
+| Coastline (sea) | OpenStreetMap `natural=coastline` (land on the left of each way) | sea polygons for the cell, 3 m simplification with cell-edge vertices kept, split along the 8 × 8 chunk grid; the app draws land and sea from them inside loaded regions (zoom ≥ 8) instead of the bundled 1:10M world coastline |
 | Waterways, water bodies, waterfalls/springs | Vicmap Hydro (DataVic WFS) | as above, 4 m simplification (1:25 000 product) |
 
 Neighbouring regions share their edge samples and their boundary-crossing road segments (the nodes on both sides of each edge are never simplified away), so contours and walking routes continue across region edges. Car-park aisles, driveways, sidewalks and crossings are left off the map, except the shortest pieces that join walking networks which would otherwise be separate (for example a trail that starts from a car-park aisle). Nothing is derived from elevation: streams are only the mapped Vicmap features.

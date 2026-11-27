@@ -37,6 +37,8 @@ interface LoadedRegion {
   bounds: [number, number, number, number];
   size: number;
   stored: P.StoredRegion;
+  /** the file defines its own coastline (sea areas; land elsewhere in the cell) */
+  sea: boolean;
 }
 interface Waypoint {
   id: string;
@@ -215,6 +217,12 @@ function refreshOverlays(): void {
     const loaded = state.regions.has(c.id);
     feats.push({ type: 'Feature', properties: { k: loaded ? 'loaded' : 'cell', id: c.id, name: c.name }, geometry: { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] } });
   }
+  // regions that carry their own coastline: land colour under the whole cell, the file's sea is drawn on top
+  for (const r of state.regions.values()) {
+    if (!r.sea) continue;
+    const [w, s, e, n] = r.bounds;
+    feats.push({ type: 'Feature', properties: { k: 'landbase', id: r.id }, geometry: { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] } });
+  }
   for (const r of state.regions.values()) {
     if (VIC_REGIONS.some((c) => c.id === r.id)) continue;
     const [w, s, e, n] = r.bounds;
@@ -252,7 +260,7 @@ async function loadSettings(): Promise<void> {
 }
 
 // ---------------------------------------------------------------- regions
-interface WorkerMeta { meta: { id: string; name: string; bounds: [number, number, number, number]; dem: { maxErrorM: number }; vec: { counts: Record<string, number> } }; size: number }
+interface WorkerMeta { meta: { id: string; name: string; bounds: [number, number, number, number]; dem: { maxErrorM: number }; vec: { counts: Record<string, number>; sea?: boolean } }; size: number }
 
 async function loadRegionIntoWorkers(stored: P.StoredRegion, bytes: ArrayBuffer | null, verify: boolean): Promise<WorkerMeta> {
   const results = await pool.all<WorkerMeta>((i) => {
@@ -269,7 +277,7 @@ async function restoreRegions(list: P.StoredRegion[]): Promise<void> {
       const bytes = await P.readStoredRegion(s);
       if (!s.url && !bytes) continue;
       const r = await loadRegionIntoWorkers(s, bytes, false);
-      state.regions.set(r.meta.id, { id: r.meta.id, name: r.meta.name, bounds: r.meta.bounds, size: r.size, stored: s });
+      state.regions.set(r.meta.id, { id: r.meta.id, name: r.meta.name, bounds: r.meta.bounds, size: r.size, stored: s, sea: !!r.meta.vec.sea });
     } catch (e) {
       console.warn('could not restore region', s.id, e);
     }
@@ -298,7 +306,7 @@ async function addRegion(): Promise<void> {
     if (old) await pool.all(() => ({ msg: { type: 'unload', key: id } }));
     const bytes = await P.readStoredRegion(stored);
     const m = await loadRegionIntoWorkers(stored, bytes, false);
-    state.regions.set(id, { id, name: m.meta.name, bounds: m.meta.bounds, size: m.size, stored });
+    state.regions.set(id, { id, name: m.meta.name, bounds: m.meta.bounds, size: m.size, stored, sea: !!m.meta.vec.sea });
     hideStatus();
     rebuildStyle();
     toast(`Loaded ${id} – ${m.meta.name} (${(m.size / 1048576).toFixed(1)} MB). Tap it on the globe to fly in.`, 6000);

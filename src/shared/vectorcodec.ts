@@ -22,8 +22,9 @@ export const RC = {
 export const RF = { BRIDGE: 1, TUNNEL: 2, NOFOOT: 4, UNPAVED: 8, PRIVATE: 16, FORD: 32 } as const;
 // Water line classes
 export const WC = { RIVER: 0, STREAM: 1, CHANNEL: 2, CONNECTOR: 3 } as const;
-// Water area classes
-export const AC = { LAKE: 0, PONDAGE: 1, RIVER: 2, WETLAND: 3 } as const;
+// Water area classes.  SEA (from the OSM coastline) only in files whose meta.vec.sea is set; in older
+// files class 1 was a pondage, which is drawn as a lake.
+export const AC = { LAKE: 0, SEA: 1, RIVER: 2, WETLAND: 3 } as const;
 // POI types
 export const PT = {
   PEAK: 1, SADDLE: 2, CAVE: 3, HUT: 4, SHELTER: 5, CAMP: 6, WATER: 7, VIEWPOINT: 8, TOILETS: 9,

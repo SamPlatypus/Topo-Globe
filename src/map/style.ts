@@ -17,6 +17,9 @@ const z = (stops: [number, number][]): ExpressionSpecification =>
 
 const empty = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection;
 
+/** zoom from which loaded regions draw their own coastline instead of the world map's */
+const SEA_MINZOOM = 8;
+
 export function buildStyle(o: StyleOptions): StyleSpecification {
   const b = o.bounds ?? [140, -40, 150, -33];
   const tiled = !!o.bounds;
@@ -39,6 +42,9 @@ export function buildStyle(o: StyleOptions): StyleSpecification {
     { id: 'sea', type: 'background', paint: { 'background-color': '#9fcbe8' } },
     { id: 'land', type: 'fill', source: 'world', filter: ['==', ['get', 'k'], 'land'], paint: { 'fill-color': '#f2eee3' } },
     { id: 'ne-lakes', type: 'fill', source: 'world', filter: ['==', ['get', 'k'], 'lake'], maxzoom: 10, paint: { 'fill-color': '#9fcbe8' } },
+    // inside a loaded region that carries its own coastline the world map's 1:10M coast is replaced:
+    // land colour under the whole cell, and the region's sea ('sea-area') drawn on top of it
+    { id: 'region-land', type: 'fill', source: 'regions', filter: ['==', ['get', 'k'], 'landbase'], minzoom: SEA_MINZOOM, paint: { 'fill-color': '#f2eee3', 'fill-antialias': false } },
   ];
   if (tiled) {
     layers.push(
@@ -49,7 +55,7 @@ export function buildStyle(o: StyleOptions): StyleSpecification {
         'hillshade-method': 'multidirectional',
       } },
       { id: 'slope', type: 'raster', source: 'slope', minzoom: 10, paint: { 'raster-opacity': z([[10, 0], [11, 0.85]]), 'raster-fade-duration': 0, 'raster-resampling': 'linear' } },
-      { id: 'water-area', type: 'fill', source: 'vec', 'source-layer': 'water_areas', paint: {
+      { id: 'water-area', type: 'fill', source: 'vec', 'source-layer': 'water_areas', filter: ['!=', ['get', 'cls'], 1], paint: {
         'fill-color': ['match', ['get', 'cls'], 3, '#b5dbe6', '#89c2ea'],
         'fill-outline-color': '#2f7fc8',
       } },
@@ -67,6 +73,11 @@ export function buildStyle(o: StyleOptions): StyleSpecification {
       } },
       { id: 'contour-index', type: 'line', source: 'contours', 'source-layer': 'contours', filter: ['==', ['get', 'idx'], 1], paint: {
         'line-color': '#8a4511', 'line-opacity': 0.9, 'line-width': z([[10, 0.9], [14, 1.4], [17, 2]]),
+      } },
+      // the sea from the region's OSM coastline, above hillshade and contours; outline = fill so the
+      // chunk pieces and neighbouring regions join without seams
+      { id: 'sea-area', type: 'fill', source: 'vec', 'source-layer': 'water_areas', filter: ['==', ['get', 'cls'], 1], minzoom: SEA_MINZOOM, paint: {
+        'fill-color': '#9fcbe8', 'fill-outline-color': '#9fcbe8',
       } },
       // roads, tracks, paths
       { id: 'road-casing', type: 'line', source: 'vec', 'source-layer': 'roads', filter: ['<=', ['get', 'cls'], 6], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: {

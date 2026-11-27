@@ -153,3 +153,73 @@ class LinkBridgeTest(unittest.TestCase):
         self.assertIsNone(classify_link({'highway': 'service', 'service': 'driveway', 'access': 'private'}))
         self.assertIsNone(classify_link({'highway': 'service', 'service': 'drive-through'}))
         self.assertIsNone(classify_link({'highway': 'residential'}))  # a road: kept anyway, not a link
+
+
+# ---------------------------------------------------------------- sea from the OSM coastline
+from shapely.geometry import Point, Polygon as SPolygon  # noqa: E402
+from prepare_vectors import sea_polygon, sea_areas, SEA_CLS  # noqa: E402
+
+CELL = (142.0, -39.0, 143.0, -38.0)
+LAT0 = -38.5
+
+
+def area_of(records):
+    """total area (deg^2) of quantised sea records"""
+    tot = 0.0
+    for rec in records:
+        rings = [[(x / 50000, y / 50000) for x, y in r] for r in rec['r']]
+        tot += SPolygon(rings[0], rings[1:]).area
+    return tot
+
+
+class SeaTest(unittest.TestCase):
+    def test_straight_coast_land_on_the_left(self):
+        east = [(141.9, -38.5), (142.5, -38.5), (143.1, -38.5)]  # heading east: land north, sea south
+        sea = sea_polygon([east], *CELL, LAT0)
+        self.assertAlmostEqual(sea.area, 0.5, places=6)
+        self.assertTrue(sea.contains(Point(142.5, -38.8)))
+        self.assertFalse(sea.contains(Point(142.5, -38.2)))
+        west = list(reversed(east))  # heading west: the sea is north
+        self.assertTrue(sea_polygon([west], *CELL, LAT0).contains(Point(142.5, -38.2)))
+
+    def test_island_is_a_hole(self):
+        east = [(141.9, -38.5), (143.1, -38.5)]
+        # anticlockwise ring: land (on the left) inside
+        island = [(142.45, -38.85), (142.55, -38.85), (142.55, -38.75), (142.45, -38.75), (142.45, -38.85)]
+        sea = sea_polygon([east, island], *CELL, LAT0)
+        self.assertFalse(sea.contains(Point(142.5, -38.8)))
+        self.assertTrue(sea.contains(Point(142.3, -38.8)))
+        self.assertAlmostEqual(sea.area, 0.5 - 0.01, places=6)
+
+    def test_bay_from_the_cell_edge(self):
+        bay = [(142.3, -39.1), (142.3, -38.7), (142.7, -38.7), (142.7, -39.1)]
+        sea = sea_polygon([bay], *CELL, LAT0)
+        self.assertAlmostEqual(sea.area, 0.4 * 0.3, places=6)
+        self.assertTrue(sea.contains(Point(142.5, -38.9)))
+        self.assertFalse(sea.contains(Point(142.1, -38.9)))
+
+    def test_no_coastline_means_all_land(self):
+        self.assertIsNone(sea_polygon([], *CELL, LAT0))
+        self.assertEqual(sea_areas([[(140.0, -38.5), (141.0, -38.5)]], *CELL, LAT0), [])
+
+    def test_pieces_cover_the_sea_on_the_chunk_grid(self):
+        wiggly = [(141.9, -38.5)] + [(142.0 + k * 0.01, -38.5 + 0.03 * ((k % 7) - 3) / 3) for k in range(101)] + [(143.1, -38.5)]
+        recs = sea_areas([wiggly], *CELL, LAT0)
+        self.assertTrue(all(r['c'] == SEA_CLS for r in recs))
+        self.assertGreater(len(recs), 32)  # split along the 8 x 8 grid
+        whole = sea_polygon([wiggly], *CELL, LAT0).area
+        self.assertAlmostEqual(area_of(recs), whole, delta=whole * 0.002)
+        for r in recs:  # every piece inside one chunk
+            xs = [x for x, _ in r['r'][0]]
+            ys = [y for _, y in r['r'][0]]
+            self.assertLessEqual(max(xs) - min(xs), 50000 // 8 + 1)
+            self.assertLessEqual(max(ys) - min(ys), 50000 // 8 + 1)
+
+    def test_neighbouring_cells_meet_exactly(self):
+        coast = [(141.9, -38.3), (142.8, -38.4), (142.95, -38.47), (143.02, -38.52), (143.2, -38.6), (144.1, -38.7)]  # crosses 143 E
+        a = sea_areas([coast], 142.0, -39.0, 143.0, -38.0, LAT0)
+        b = sea_areas([coast], 143.0, -39.0, 144.0, -38.0, LAT0)
+        edge = 143 * 50000
+        ya = sorted({y for r in a for ring in r['r'] for x, y in ring if x == edge})
+        yb = sorted({y for r in b for ring in r['r'] for x, y in ring if x == edge})
+        self.assertTrue(ya and ya == yb, (ya, yb))

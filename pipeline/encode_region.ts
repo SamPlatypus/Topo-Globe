@@ -131,6 +131,7 @@ const file = writeRegion({
   vec: {
     scale: COORD_SCALE, chunksX: CX, chunksY: CY, chunks: chunkRefs, nameCount: names.length,
     counts: { roads: rawRoads.length, water: rawWater.length, areas: rawAreas.length, pois: rawPois.length, points: totalPts },
+    ...(vec.sea === true ? { sea: true } : {}),
   },
 }, demBytes, nameBytes, vecBytes);
 writeFileSync(arg('out'), file);

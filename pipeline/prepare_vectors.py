@@ -19,8 +19,10 @@ import argparse, heapq, json, math, sys
 from collections import defaultdict
 
 import osmium
-from shapely.geometry import shape, box, LineString, Polygon, MultiPolygon, GeometryCollection, MultiLineString
-from shapely.ops import linemerge
+from shapely.geometry import shape, box, LineString, Point, Polygon, MultiPolygon, GeometryCollection, MultiLineString
+from shapely.ops import linemerge, polygonize, unary_union
+from shapely.strtree import STRtree
+from shapely.validation import make_valid
 
 COORD_SCALE = 50000   # 2e-5 degree grid (~2 m; rounding <= 1.1 m)
 OSM_TOL_M = 2.0        # Douglas-Peucker tolerance for roads/tracks (OSM traces are +-5 m)
@@ -180,6 +182,7 @@ def q(v):
 def load_osm(path, W, S, E, N):
     ways = []        # (attrs, [(node_id, lon, lat), ...])
     links = []       # walkable link ways left off the map unless they join networks (see bridge_links)
+    coast = []       # natural=coastline ways, [(lon, lat), ...] in way order (land on the left)
     pois = []
     fp = osmium.FileProcessor(path).with_locations().with_filter(osmium.filter.KeyFilter('highway', 'natural', 'tourism', 'amenity'))
     for o in fp:
@@ -202,6 +205,12 @@ def load_osm(path, W, S, E, N):
         if not o.is_way():
             continue
         t = o.tags
+        if t.get('natural') == 'coastline':
+            try:
+                coast.append([(n.location.lon, n.location.lat) for n in o.nodes])
+            except osmium.InvalidLocationError:
+                pass
+            continue
         if 'highway' not in t:
             if t.get('shelter_type') == 'public_transport':
                 continue
@@ -231,7 +240,7 @@ def load_osm(path, W, S, E, N):
             continue
         for run in cut_runs(nodes, W, S, E, N):
             target.append((c, run))
-    return ways, pois, links
+    return ways, pois, links, coast
 
 
 def cut_runs(nodes, W, S, E, N):
@@ -360,6 +369,122 @@ def bridge_links(ways, links, lat0, max_m=LINK_MAX_M):
                 cur = None
         if cur:
             out.append((attr, cur))
+    return out
+
+
+# ---------------------------------------------------------------- sea, from the OSM coastline
+SEA_CLS = 1            # water-area class of the sea (shared with src/shared/vectorcodec.ts AC.SEA)
+SEA_TOL_M = 3.0        # coastline simplification
+SEA_PIECES = 8         # the sea is split along the file's 8 x 8 vector chunk grid (encode_region.ts)
+
+
+def sea_polygon(coast, W, S, E, N, lat0):
+    """The sea inside the cell as one shapely geometry (None when no coastline crosses the cell).
+
+    coast: coastline ways as [(lon, lat), ...] in way order.  OSM draws the coastline with the
+    land on the left and the water on the right, so the cell is cut along the coastline into
+    faces, and every coastline segment votes (by its length) with a test point 1 cm to its right
+    for "sea" and 1 cm to its left for "land" in whichever face holds that point."""
+    cell = box(W, S, E, N)
+    kx, ky = m_per_deg(lat0)
+    lines, segs = [], []
+    for pts in coast:
+        if len(pts) < 2:
+            continue
+        ls = LineString(pts)
+        if not ls.intersects(cell):
+            continue
+        part = ls.intersection(cell)
+        lines += [g for g in getattr(part, 'geoms', [part]) if g.geom_type in ('LineString', 'MultiLineString')]
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            if W < (ax + bx) / 2 < E and S < (ay + by) / 2 < N:
+                segs.append((ax, ay, bx, by))
+    if not segs:
+        return None
+    faces = list(polygonize(unary_union([cell.exterior] + lines)))
+    tree = STRtree(faces)
+    votes = [[0.0, 0.0] for _ in faces]  # [sea, land] metres of coastline
+    for ax, ay, bx, by in segs:
+        dx, dy = (bx - ax) * kx, (by - ay) * ky
+        L = math.hypot(dx, dy)
+        if L == 0:
+            continue
+        nx, ny = dy / L, -dx / L  # unit normal to the right, in metres
+        mx, my = (ax + bx) / 2, (ay + by) / 2
+        for k, sgn in ((0, 0.01), (1, -0.01)):
+            for i in tree.query(Point(mx + sgn * nx / kx, my + sgn * ny / ky), predicate='within'):
+                votes[i][k] += L
+    sea = [f for f, (vs, vl) in zip(faces, votes) if vs > vl]
+    return unary_union(sea) if sea else None
+
+
+def _dp_ring(coords, tol_m, lat0, keep):
+    """Douglas-Peucker on a closed ring (no repeated closing point) that never drops a vertex for
+    which keep(x, y) is true, so edges along the cell boundary stay exactly on it."""
+    n = len(coords)
+    if n < 4:
+        return coords
+    pins = [i for i, (x, y) in enumerate(coords) if keep(x, y)]
+    if not pins:
+        # anchor at the first vertex and the one farthest from it
+        kx, ky = m_per_deg(lat0)
+        x0, y0 = coords[0]
+        far = max(range(n), key=lambda i: ((coords[i][0] - x0) * kx) ** 2 + ((coords[i][1] - y0) * ky) ** 2)
+        pins = [0, far] if far else [0]
+    out = []
+    for a, b in zip(pins, pins[1:] + [pins[0] + n]):
+        sec = [coords[i % n] for i in range(a, b + 1)]
+        out += dp_simplify(sec, tol_m, lat0)[:-1]
+    return out
+
+
+def sea_areas(coast, W, S, E, N, lat0, pieces=SEA_PIECES):
+    """Water-area records for the sea in the cell: simplified, split along the vector chunk grid
+    (so no single feature spans the file), quantised.  Pieces meet exactly along grid lines and the
+    cell edge, so neighbouring cells and chunks join without gaps."""
+    seapoly = sea_polygon(coast, W, S, E, N, lat0)
+    if seapoly is None or seapoly.is_empty:
+        return []
+    eps = 1e-9
+    on_edge = lambda x, y: abs(x - W) < eps or abs(x - E) < eps or abs(y - S) < eps or abs(y - N) < eps
+    simple = []
+    for pg in getattr(seapoly, 'geoms', [seapoly]):
+        if pg.geom_type != 'Polygon':
+            continue
+        shell = _dp_ring(list(pg.exterior.coords)[:-1], SEA_TOL_M, lat0, on_edge)
+        holes = [_dp_ring(list(r.coords)[:-1], SEA_TOL_M, lat0, on_edge) for r in pg.interiors]
+        cand = Polygon(shell, [h for h in holes if len(h) >= 3]) if len(shell) >= 3 else None
+        if cand is None or cand.is_empty:
+            continue
+        if not cand.is_valid:
+            cand = make_valid(cand)
+        simple.append(cand)
+    seapoly = unary_union(simple).intersection(box(W, S, E, N))
+    kx, ky = m_per_deg(lat0)
+    out = []
+    dx, dy = (E - W) / pieces, (N - S) / pieces
+    for j in range(pieces):
+        for i in range(pieces):
+            cb = box(W + i * dx, S + j * dy, W + (i + 1) * dx if i < pieces - 1 else E, S + (j + 1) * dy if j < pieces - 1 else N)
+            part = seapoly.intersection(cb)
+            for pg in getattr(part, 'geoms', [part]):
+                if pg.geom_type != 'Polygon' or pg.area * kx * ky < 1.0:
+                    continue
+                rings = []
+                for r in [pg.exterior] + list(pg.interiors):
+                    qr = []
+                    for x, y in list(r.coords)[:-1]:
+                        pt = (q(x), q(y))
+                        if not qr or qr[-1] != pt:
+                            qr.append(pt)
+                    if len(qr) > 1 and qr[0] == qr[-1]:
+                        qr.pop()
+                    if len(qr) >= 3:
+                        rings.append(qr)
+                    elif not rings:
+                        break
+                if rings:
+                    out.append({'c': SEA_CLS, 'n': '', 'r': rings})
     return out
 
 
@@ -556,7 +681,8 @@ def load_vicmap(prefix, W, S, E, N, lat0):
     # water areas
     areas = []
     kx, ky = m_per_deg(lat0)
-    AREA_CLS = {'wb_lake': 0, 'reservoir': 0, 'pondage': 1, 'pondage_sewerage': 1, 'pondage_saltpan': 1,
+    # class 1 is the sea (from the OSM coastline, see sea_areas); pondages are drawn like lakes
+    AREA_CLS = {'wb_lake': 0, 'reservoir': 0, 'pondage': 0, 'pondage_sewerage': 0, 'pondage_saltpan': 0,
                 'watercourse_area_river': 2, 'watercourse_area_channel_drain': 2, 'watercourse_area_drain': 2,
                 'watercourse_area_channel': 2, 'wetland_swamp': 3}
     with open(prefix + 'hy_water_area_polygon.geojson') as fh:
@@ -608,7 +734,7 @@ def main():
     a = ap.parse_args()
     W, S, E, N = map(float, a.bbox.split(','))
     lat0 = (S + N) / 2
-    ways, osm_pois, links = load_osm(a.osm, W, S, E, N)
+    ways, osm_pois, links, coast = load_osm(a.osm, W, S, E, N)
     bridges = bridge_links(ways, links, lat0)
     kx, ky = m_per_deg(lat0)
     bridge_m = sum(math.hypot((r[k][1] - r[k - 1][1]) * kx, (r[k][2] - r[k - 1][2]) * ky) for _, r in bridges for k in range(1, len(r)))
@@ -619,10 +745,15 @@ def main():
     print(f'OSM: {len(ways)} way pieces -> {njunc} junction nodes, {len(chains)} chains, '
           f'{sum(len(e["p"]) for e in chains)} points, {len(osm_pois)} POIs', file=sys.stderr)
     lines, areas, vic_pois = load_vicmap(a.vicmap_prefix, W, S, E, N, lat0)
+    sea = sea_areas(coast, W, S, E, N, lat0)
+    print(f'Sea: {len(coast)} coastline ways -> {len(sea)} sea pieces '
+          f'({sum(len(r) for s_ in sea for r in s_["r"])} pts)', file=sys.stderr)
+    areas += sea
     print(f'Vicmap: {len(lines)} lines ({sum(len(l["p"]) for l in lines)} pts), {len(areas)} areas '
           f'({sum(sum(len(r) for r in ar["r"]) for ar in areas)} pts), {len(vic_pois)} points', file=sys.stderr)
     out = {
         'bbox': [W, S, E, N], 'coordScale': COORD_SCALE,
+        'sea': True,  # land and sea come from this file: class-1 areas are sea, the rest of the cell is land
         'roads': chains,
         'waterLines': lines, 'waterAreas': areas,
         'pois': osm_pois + vic_pois,

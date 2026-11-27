@@ -59,6 +59,8 @@ export interface RegionMeta {
     chunks: ChunkRef[];
     nameCount: number;
     counts: { roads: number; water: number; areas: number; pois: number; points: number };
+    /** land and sea come from this file: class-1 water areas are the sea, the rest of the cell is land */
+    sea?: boolean;
   };
   sections: { dem: SectionRef; names: SectionRef; vec: SectionRef };
 }
