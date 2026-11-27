@@ -106,6 +106,32 @@ test('A* finds the faster (flatter) route and respects access', () => {
   assert.ok('error' in r3);
 });
 
+test('a tap beside a dead-end path snaps onto the track that reaches the destination', () => {
+  const S = 50000;
+  const P = (lon: number, lat: number) => [Math.round(lon * S), Math.round(lat * S)];
+  // a 1.8 km track, and a 60 m car-park footpath 15 m north of its west end that touches nothing
+  const input: RoadInput = {
+    coords: Int32Array.from([...P(142.5, -37.15), ...P(142.52, -37.15), ...P(142.4998, -37.14986), ...P(142.5005, -37.14986)]),
+    offsets: Uint32Array.from([0, 2, 4]), cls: Uint8Array.from([8, 9]), flags: Uint8Array.from([0, 0]),
+    name: Int32Array.from([0, 1]), names: ['Main Track', 'Car park path'], n: 2,
+  };
+  const g = new RoadGraph([input], S, () => 100);
+  // the tap is 3 m from the footpath and 12 m from the track
+  const r = g.route(142.5001, -37.14989, 142.52, -37.15);
+  assert.ok(!('error' in r), JSON.stringify(r));
+  if (!('error' in r)) {
+    assert.ok(Math.abs(r.coords[0][1] + 37.15) < 1e-6, `route starts on the connected track: ${r.coords[0]}`);
+    assert.ok(r.snapMetres[0] > 10 && r.snapMetres[0] < 15, String(r.snapMetres[0]));
+    assert.ok(r.snapMetres[1] < 1, String(r.snapMetres[1]));
+  }
+  // both taps beside the footpath: the route stays on it
+  const r2 = g.route(142.4999, -37.14988, 142.5004, -37.14988);
+  assert.ok(!('error' in r2), JSON.stringify(r2));
+  if (!('error' in r2)) assert.equal(r2.legs[0].name, 'Car park path');
+  // nothing within 1.5 km of the start
+  assert.ok('error' in g.route(142.6, -37.15, 142.52, -37.15));
+});
+
 test('plate motion: GDA2020 vs ATRF2014 at 2026.85 is ~0.4 m NNE near Melbourne', () => {
   const g = { lat: -37.8, lon: 145.0 };
   const a = gda2020ToAtrf(g.lat, g.lon, 2026.85);

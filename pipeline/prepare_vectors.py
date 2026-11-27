@@ -15,7 +15,7 @@ region boundary are kept whole (one node outside), and the nodes on both sides
 of the boundary are never simplified away, so the same two vertices appear in
 both neighbouring region files and routes join up across edges.
 """
-import argparse, json, math, sys
+import argparse, heapq, json, math, sys
 from collections import defaultdict
 
 import osmium
@@ -75,6 +75,36 @@ def classify_way(t):
     foot = t.get('foot')
     if hw == 'service' and access in ('private', 'no') and foot not in ('yes', 'designated', 'permissive'):
         return None  # private driveways / yards
+    return way_attrs(t)
+
+
+# Ways left off the map to keep it small and uncluttered, but which walkers use: car-park aisles,
+# driveways, sidewalks, crossings and pedestrian areas (walked along their outline).  They are kept
+# only where they join walkable networks that are otherwise separate (bridge_links), e.g. a trail
+# that starts from a car-park aisle rather than from the road.
+LINK_SERVICE = {'parking_aisle', 'driveway'}
+LINK_AREA = {'pedestrian', 'footway', 'path'}
+LINK_MAX_M = 500.0     # how far a link may reach out from a network (a join is at most twice this)
+
+
+def classify_link(t):
+    hw = t.get('highway')
+    if hw not in HW_CLASS or t.get('indoor') == 'yes':
+        return None
+    if not ((hw == 'service' and t.get('service') in LINK_SERVICE)
+            or (hw == 'footway' and t.get('footway') in DROP_FOOTWAY)
+            or (hw in LINK_AREA and t.get('area') == 'yes')):
+        return None
+    attrs = way_attrs(t)
+    if attrs[1] & (F_NOFOOT | F_PRIVATE):
+        return None
+    return attrs
+
+
+def way_attrs(t):
+    hw = t.get('highway')
+    access = t.get('access')
+    foot = t.get('foot')
     cls = HW_CLASS[hw]
     flags = 0
     if t.get('bridge') not in (None, 'no'):
@@ -149,6 +179,7 @@ def q(v):
 
 def load_osm(path, W, S, E, N):
     ways = []        # (attrs, [(node_id, lon, lat), ...])
+    links = []       # walkable link ways left off the map unless they join networks (see bridge_links)
     pois = []
     fp = osmium.FileProcessor(path).with_locations().with_filter(osmium.filter.KeyFilter('highway', 'natural', 'tourism', 'amenity'))
     for o in fp:
@@ -188,15 +219,19 @@ def load_osm(path, W, S, E, N):
                     break
             continue
         c = classify_way(t)
+        target = ways
         if c is None:
-            continue
+            c = classify_link(t)
+            target = links
+            if c is None:
+                continue
         try:
             nodes = [(n.ref, n.location.lon, n.location.lat) for n in o.nodes]
         except osmium.InvalidLocationError:
             continue
         for run in cut_runs(nodes, W, S, E, N):
-            ways.append((c, run))
-    return ways, pois
+            target.append((c, run))
+    return ways, pois, links
 
 
 def cut_runs(nodes, W, S, E, N):
@@ -228,6 +263,104 @@ def cut_runs(nodes, W, S, E, N):
     if len(run) >= 2:
         runs.append(run)
     return runs
+
+
+def bridge_links(ways, links, lat0, max_m=LINK_MAX_M):
+    """The pieces of link ways (car-park aisles, sidewalks, crossings ...) that join walkable
+    networks which would otherwise be separate, shortest joins first.  Returns runs to add to ways.
+
+    A multi-source Dijkstra over the link ways starts from every node a link shares with a
+    walkable way, each wave labelled with that way's network, and reaches at most max_m out.
+    Wherever two waves of different networks meet on a link edge, the path through that edge is
+    the shortest link between the two networks.  Those joins are accepted shortest first while they
+    still connect two different networks (Kruskal), so no more links are kept than needed.
+    """
+    kx, ky = m_per_deg(lat0)
+
+    def metres(a, b):
+        return math.hypot((a[1] - b[1]) * kx, (a[2] - b[2]) * ky)
+
+    parent = {}
+
+    def find(a):
+        root = a
+        while parent.setdefault(root, root) != root:
+            root = parent[root]
+        while parent[a] != root:
+            parent[a], a = root, parent[a]
+        return root
+
+    for attr, run in ways:
+        if attr[1] & (F_NOFOOT | F_PRIVATE):
+            continue  # the phone does not route on these
+        for k in range(1, len(run)):
+            ra, rb = find(run[k - 1][0]), find(run[k][0])
+            if ra != rb:
+                parent[ra] = rb
+    networks = {n: find(n) for n in parent}
+
+    adj = defaultdict(list)  # node -> [(other node, metres, link index, segment index)]
+    for li, (_, run) in enumerate(links):
+        for k in range(1, len(run)):
+            a, b = run[k - 1], run[k]
+            L = metres(a, b)
+            adj[a[0]].append((b[0], L, li, k))
+            adj[b[0]].append((a[0], L, li, k))
+    dist, label, pred, heap = {}, {}, {}, []
+    for n in adj:
+        if n in networks:
+            dist[n], label[n], pred[n] = 0.0, networks[n], None
+            heap.append((0.0, n))
+    heapq.heapify(heap)
+    while heap:
+        d, n = heapq.heappop(heap)
+        if d > dist[n]:
+            continue
+        for m, L, li, k in adj[n]:
+            nd = d + L
+            if nd <= max_m and nd < dist.get(m, math.inf):
+                dist[m], label[m], pred[m] = nd, label[n], (n, li, k)
+                heapq.heappush(heap, (nd, m))
+    joins = []
+    for li, (_, run) in enumerate(links):
+        for k in range(1, len(run)):
+            a, b = run[k - 1][0], run[k][0]
+            if a in label and b in label and label[a] != label[b]:
+                total = dist[a] + metres(run[k - 1], run[k]) + dist[b]
+                if total <= 2 * max_m:
+                    joins.append((total, a, b, li, k))
+    joins.sort()
+    merged = {}
+
+    def top(a):
+        while merged.get(a, a) != a:
+            a = merged[a]
+        return a
+
+    keep = set()
+    for _, a, b, li, k in joins:
+        ra, rb = top(label[a]), top(label[b])
+        if ra == rb:
+            continue
+        merged[ra] = rb
+        keep.add((li, k))
+        for n in (a, b):
+            while pred[n] is not None:
+                n, pli, pk = pred[n]
+                keep.add((pli, pk))
+    out = []
+    for li, (attr, run) in enumerate(links):
+        cur = None
+        for k in range(1, len(run)):
+            if (li, k) in keep:
+                cur = cur or [run[k - 1]]
+                cur.append(run[k])
+            elif cur:
+                out.append((attr, cur))
+                cur = None
+        if cur:
+            out.append((attr, cur))
+    return out
 
 
 def build_graph(ways, lat0, bbox=None):
@@ -475,7 +608,13 @@ def main():
     a = ap.parse_args()
     W, S, E, N = map(float, a.bbox.split(','))
     lat0 = (S + N) / 2
-    ways, osm_pois = load_osm(a.osm, W, S, E, N)
+    ways, osm_pois, links = load_osm(a.osm, W, S, E, N)
+    bridges = bridge_links(ways, links, lat0)
+    kx, ky = m_per_deg(lat0)
+    bridge_m = sum(math.hypot((r[k][1] - r[k - 1][1]) * kx, (r[k][2] - r[k - 1][2]) * ky) for _, r in bridges for k in range(1, len(r)))
+    print(f'Links: {len(links)} car-park aisle / driveway / sidewalk / crossing pieces; {len(bridges)} pieces '
+          f'({bridge_m / 1000:.1f} km) kept where they join otherwise separate walkable networks', file=sys.stderr)
+    ways += bridges
     njunc, chains = build_graph(ways, lat0, (W, S, E, N))
     print(f'OSM: {len(ways)} way pieces -> {njunc} junction nodes, {len(chains)} chains, '
           f'{sum(len(e["p"]) for e in chains)} points, {len(osm_pois)} POIs', file=sys.stderr)

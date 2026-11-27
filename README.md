@@ -19,7 +19,7 @@ Victoria is split into 40 one-degree cells (about 88 × 111 km), aligned with th
 | Roads, tracks, paths, walker POIs | OpenStreetMap (Geofabrik Australia extract) | TGV1: junction-preserving chains, Douglas-Peucker 2 m, 2e-5° grid, delta + range coding in 8 × 8 chunks |
 | Waterways, water bodies, waterfalls/springs | Vicmap Hydro (DataVic WFS) | as above, 4 m simplification (1:25 000 product) |
 
-Neighbouring regions share their edge samples and their boundary-crossing road segments, so contours and walking routes continue across region edges. Nothing is derived from elevation: streams are only the mapped Vicmap features.
+Neighbouring regions share their edge samples and their boundary-crossing road segments (the nodes on both sides of each edge are never simplified away), so contours and walking routes continue across region edges. Car-park aisles, driveways, sidewalks and crossings are left off the map, except the shortest pieces that join walking networks which would otherwise be separate (for example a trail that starts from a car-park aisle). Nothing is derived from elevation: streams are only the mapped Vicmap features.
 
 Build one region locally (needs Python 3.12 with `pipeline/requirements.txt`, Node 22, optionally `osmium-tool`):
 
@@ -37,7 +37,7 @@ python pipeline/build_region.py --id S38E145 --osm australia-latest.osm.pbf --ou
 - **Contours** – marching squares on the phone from the native grid; 10 m (index 50 m) from zoom 14, 20/100 m at 13, 50/250 m at 12, 100/500 m at 11, 200/1000 m at 10.
 - **Hillshade, slope, steep ground** – multidirectional hillshade; slope from central differences with ellipsoidal grid spacing, coloured from 15° to ≥ 40°.
 - **Profiles** – geodesic legs sampled every ≤ 15 m; ascent/descent on a 45 m moving average with a 3 m hysteresis (rejects DEM noise).
-- **Walking routes** – A* on mapped tracks, paths and roads (private and no-foot ways excluded); edge time from Tobler's hiking function with elevations sampled every ≤ 30 m; admissible straight-line heuristic at 6 km/h.
+- **Walking routes** – A* on mapped tracks, paths and roads (private and no-foot ways excluded); edge time from Tobler's hiking function with elevations sampled every ≤ 30 m; admissible straight-line heuristic at 6 km/h. Taps are snapped to the nearest start and end on one connected network (within 1.5 km), so a tap beside a dead-end path still plans; the route panel says when a tap was moved 40 m or more.
 - **GPS** – raw GNSS (Android GPS provider, no network location), accuracy circle, satellites-in-view/used while waiting for a slow first fix with no phone signal.
 - **Waypoints** – written to app storage with fsync + atomic rename (survive crashes and reboots).
 - **Budget phones** – a frame-rate governor steps render resolution, labels, slope shading, pitch and finally 3D down when frames get slow, and back up when they are fast.

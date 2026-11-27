@@ -83,7 +83,11 @@ export interface RouteResult {
   seconds: number;
   /** route legs by name for the summary */
   legs: { name: string; cls: number; metres: number }[];
+  /** metres from the tapped start / end to where the route meets the mapped network */
+  snapMetres: [number, number];
 }
+
+type Snap = { edge: number; seg: number; t: number; lon: number; lat: number; dist: number };
 
 export class RoadGraph {
   readonly scale: number;
@@ -100,6 +104,8 @@ export class RoadGraph {
   eBwd!: Float32Array;
   adjStart!: Uint32Array;
   adj!: Uint32Array;
+  /** connected-component id of each node */
+  comp!: Int32Array;
   px!: Int32Array; // all points
   py!: Int32Array;
   names: string[] = [];
@@ -200,6 +206,24 @@ export class RoadGraph {
     for (let i = 0; i < this.edges; i++) { adj[fill[this.eU[i]]++] = i; adj[fill[this.eV[i]]++] = i; }
     this.adjStart = start;
     this.adj = adj;
+    // 5b. connected components, so taps can be snapped onto a network that reaches the other end
+    const comp = new Int32Array(this.nodes).fill(-1);
+    const stack: number[] = [];
+    for (let s0 = 0, nc = 0; s0 < this.nodes; s0++) {
+      if (comp[s0] >= 0) continue;
+      comp[s0] = nc;
+      stack.push(s0);
+      while (stack.length) {
+        const n = stack.pop()!;
+        for (let a = start[n]; a < start[n + 1]; a++) {
+          const e = adj[a];
+          const m = this.eU[e] === n ? this.eV[e] : this.eU[e];
+          if (comp[m] < 0) { comp[m] = nc; stack.push(m); }
+        }
+      }
+      nc++;
+    }
+    this.comp = comp;
     // 6. spatial index (cells of ~0.004 deg)
     this.cellSize = Math.round(0.004 * scale);
     for (let i = 0; i < this.edges; i++) {
@@ -248,14 +272,22 @@ export class RoadGraph {
   }
 
   /** Nearest point on any edge within maxMetres. */
-  snap(lon: number, lat: number, maxMetres = 1500): { edge: number; seg: number; t: number; lon: number; lat: number; dist: number } | null {
+  snap(lon: number, lat: number, maxMetres = 1500): Snap | null {
+    return this.nearest(lon, lat, maxMetres, false)[0] ?? null;
+  }
+
+  /**
+   * Nearest points on the network within maxMetres: the single nearest one, or
+   * (perComponent) the nearest one on each connected network, nearest first.
+   */
+  private nearest(lon: number, lat: number, maxMetres: number, perComponent: boolean): Snap[] {
     const x = lon * this.scale, y = lat * this.scale;
     const [kx, ky] = unitScale(lat, this.scale);
     const cs = this.cellSize;
     const cx = Math.floor(x / cs), cy = Math.floor(y / cs);
     const ring = Math.ceil(maxMetres / (cs * Math.min(kx, ky))) + 1;
-    type Snap = { edge: number; seg: number; t: number; lon: number; lat: number; dist: number };
-    let best = null as Snap | null;
+    const best = new Map<number, Snap>(); // component (or 0) -> nearest point on it
+    let nearestD = Infinity;
     const seen = new Set<number>();
     for (let r = 0; r <= ring; r++) {
       for (let dy = -r; dy <= r; dy++) {
@@ -266,6 +298,7 @@ export class RoadGraph {
           for (const e of list) {
             if (seen.has(e)) continue;
             seen.add(e);
+            const key = perComponent ? this.comp[this.eU[e]] : 0;
             for (let k = this.eFrom[e]; k < this.eTo[e]; k++) {
               const ax = (this.px[k] - x) * kx, ay = (this.py[k] - y) * ky;
               const bx = (this.px[k + 1] - x) * kx, by = (this.py[k + 1] - y) * ky;
@@ -275,28 +308,42 @@ export class RoadGraph {
               t = t < 0 ? 0 : t > 1 ? 1 : t;
               const qx = ax + t * vx, qy = ay + t * vy;
               const d = Math.hypot(qx, qy);
-              if (!best || d < best.dist) {
-                best = {
+              if (d > maxMetres) continue;
+              const cur = best.get(key);
+              if (!cur || d < cur.dist) {
+                best.set(key, {
                   edge: e, seg: k, t, dist: d,
                   lon: (this.px[k] + t * (this.px[k + 1] - this.px[k])) / this.scale,
                   lat: (this.py[k] + t * (this.py[k + 1] - this.py[k])) / this.scale,
-                };
+                });
               }
+              if (d < nearestD) nearestD = d;
             }
           }
         }
       }
-      // stop once the searched ring is beyond the best distance found
-      if (best && (r * cs * Math.min(kx, ky)) > best.dist + cs * Math.max(kx, ky)) break;
+      // nearest only: stop once the searched ring is beyond the best distance found
+      if (!perComponent && nearestD < Infinity && (r * cs * Math.min(kx, ky)) > nearestD + cs * Math.max(kx, ky)) break;
     }
-    return best && best.dist <= maxMetres ? best : null;
+    return [...best.values()].sort((a, b) => a.dist - b.dist);
   }
 
   route(fromLon: number, fromLat: number, toLon: number, toLat: number): RouteResult | { error: string } {
-    const s = this.snap(fromLon, fromLat);
-    const t = this.snap(toLon, toLat);
-    if (!s) return { error: 'The start is more than 1.5 km from any mapped track, path or road.' };
-    if (!t) return { error: 'The end is more than 1.5 km from any mapped track, path or road.' };
+    const starts = this.nearest(fromLon, fromLat, 1500, true);
+    const ends = this.nearest(toLon, toLat, 1500, true);
+    if (!starts.length) return { error: 'The start is more than 1.5 km from any mapped track, path or road.' };
+    if (!ends.length) return { error: 'The end is more than 1.5 km from any mapped track, path or road.' };
+    // Start and end on one connected network, as close to the taps as possible.  The nearest
+    // track to a tap can be a dead end the rest of the map never reaches (a car-park footpath,
+    // a path that stops short of a road); then the tap moves to the nearest track that does.
+    const endOn = new Map(ends.map((e) => [this.comp[this.eU[e.edge]], e]));
+    let s: Snap | null = null, t: Snap | null = null;
+    for (const c of starts) {
+      const d = endOn.get(this.comp[this.eU[c.edge]]);
+      if (d && (!s || !t || c.dist + d.dist < s.dist + t.dist)) { s = c; t = d; }
+    }
+    if (!s || !t) return { error: 'No connected route along mapped tracks and paths between these points.' };
+    const snapMetres: [number, number] = [s.dist, t.dist];
     const sP: [number, number] = [s.lon, s.lat];
     const tP: [number, number] = [t.lon, t.lat];
     const pen = (e: number) => CLASS_PENALTY[this.eCls[e]];
@@ -377,7 +424,7 @@ export class RoadGraph {
       coords.push(...pts);
       addLeg(this.names[this.eName[s.edge]], this.eCls[s.edge], pts);
       seconds = timeOfPolyline(pts, this.elev, this.scale);
-      return { coords, seconds, legs };
+      return { coords, seconds, legs, snapMetres };
     }
     // node path from the start edge to bestEnd (via[] is -1 only at the seeded start nodes)
     const edgesRev: number[] = [];
@@ -404,7 +451,7 @@ export class RoadGraph {
     coords.push(...last.slice(1));
     addLeg(this.names[this.eName[t.edge]], this.eCls[t.edge], last);
     seconds = timeOfPolyline(coords, this.elev, this.scale);
-    return { coords, seconds, legs };
+    return { coords, seconds, legs, snapMetres };
   }
 }
 

@@ -94,3 +94,62 @@ class EdgeJoinTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# ---------------------------------------------------------------- link ways that join networks
+from prepare_vectors import bridge_links, classify_way, classify_link, F_NOFOOT  # noqa: E402
+
+ROAD = (5, 0, 'Road', 0)
+TRAIL = (8, 0, 'Trail', 0)
+AISLE = (6, 0, 'Car Park', 0)
+WALK = (9, 0, '', 0)
+
+
+def nd(i, dx, dy):
+    """node i, dx/dy degrees from 142.5 E 37.5 S"""
+    return (i, 142.5 + dx, LAT + dy)
+
+
+def ids(out):
+    return [[n[0] for n in run] for _, run in out]
+
+
+class LinkBridgeTest(unittest.TestCase):
+    def setUp(self):
+        # a road, and a trail that starts 60 m beyond the road's end without touching it
+        self.road = (ROAD, [nd(1, 0, 0), nd(2, 0.005, 0), nd(3, 0.01, 0)])
+        self.trail = (TRAIL, [nd(10, 0.0107, 0), nd(11, 0.015, 0.003), nd(12, 0.02, 0.006)])
+
+    def test_aisle_joins_trail_to_road(self):
+        aisle = (AISLE, [nd(3, 0.01, 0), nd(20, 0.0103, -0.0002), nd(21, 0.0106, -0.0002), nd(10, 0.0107, 0)])
+        dead_end = (AISLE, [nd(3, 0.01, 0), nd(30, 0.0101, 0.0004), nd(31, 0.0104, 0.0005)])
+        sidewalk = (WALK, [nd(2, 0.005, 0), nd(40, 0.006, 0.0001), nd(41, 0.009, 0.0001), nd(3, 0.01, 0)])
+        self.assertEqual(ids(bridge_links([self.road, self.trail], [aisle, dead_end, sidewalk], LAT)), [[3, 20, 21, 10]])
+
+    def test_chain_of_links(self):
+        a = (AISLE, [nd(3, 0.01, 0), nd(20, 0.0103, -0.0002)])
+        b = (WALK, [nd(20, 0.0103, -0.0002), nd(21, 0.0106, -0.0002), nd(10, 0.0107, 0)])
+        self.assertEqual(sorted(map(tuple, ids(bridge_links([self.road, self.trail], [a, b], LAT)))), [(3, 20), (20, 21, 10)])
+
+    def test_only_the_shorter_of_two_joins(self):
+        short = (AISLE, [nd(3, 0.01, 0), nd(10, 0.0107, 0)])                         # ~60 m
+        longer = (WALK, [nd(2, 0.005, 0), nd(50, 0.0065, 0.001), nd(11, 0.015, 0.003)])  # ~900 m
+        self.assertEqual(ids(bridge_links([self.road, self.trail], [longer, short], LAT)), [[3, 10]])
+
+    def test_link_beyond_reach_is_not_kept(self):
+        far = (WALK, [nd(1, 0, 0), nd(60, 0, -0.01), nd(61, 0.0107, -0.01), nd(10, 0.0107, 0)])  # ~3 km
+        self.assertEqual(bridge_links([self.road, self.trail], [far], LAT), [])
+
+    def test_link_to_a_no_foot_way_is_not_kept(self):
+        motorway = ((0, F_NOFOOT, 'M1', 0), [nd(70, 0.0107, 0.001), nd(71, 0.03, 0.001)])
+        aisle = (AISLE, [nd(3, 0.01, 0), nd(70, 0.0107, 0.001)])
+        self.assertEqual(bridge_links([self.road, motorway], [aisle], LAT), [])
+
+    def test_classification(self):
+        self.assertIsNone(classify_way({'highway': 'service', 'service': 'parking_aisle'}))
+        self.assertIsNotNone(classify_link({'highway': 'service', 'service': 'parking_aisle'}))
+        self.assertIsNotNone(classify_link({'highway': 'footway', 'footway': 'sidewalk'}))
+        self.assertIsNotNone(classify_link({'highway': 'pedestrian', 'area': 'yes'}))
+        self.assertIsNone(classify_link({'highway': 'service', 'service': 'driveway', 'access': 'private'}))
+        self.assertIsNone(classify_link({'highway': 'service', 'service': 'drive-through'}))
+        self.assertIsNone(classify_link({'highway': 'residential'}))  # a road: kept anyway, not a link

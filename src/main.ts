@@ -663,12 +663,17 @@ function updateRoutePanel(): void {
   const st = res.profile.stats;
   const legs = res.legs.filter((l) => l.metres >= 30).slice(0, 12)
     .map((l) => `<li>${esc(l.name || roadClassName(l.cls))} <small>${fmtDist(l.metres)}</small></li>`).join('');
+  // a tap away from the tracks (or beside a dead-end path) is moved onto the nearest connected track: say so
+  const [ms, me] = res.snapMetres;
+  const moved = ms >= 40 && me >= 40 ? `starts ${fmtDist(ms)} and ends ${fmtDist(me)}`
+    : ms >= 40 ? `starts ${fmtDist(ms)}` : me >= 40 ? `ends ${fmtDist(me)}` : '';
   showSheet(`
     <h2>${fmtDist(st.distance)} · ${formatDuration(res.seconds)}</h2>
     <div class="rows">
       <div class="row"><span>Climb</span><b>↑ ${fmtElev(st.ascent)} · ↓ ${fmtElev(st.descent)}</b></div>
       <div class="row"><span>Highest</span><b>${fmtElev(st.max)}</b></div>
     </div>
+    ${moved ? `<p class="note">The route ${moved} from where you tapped, on the nearest track that connects.</p>` : ''}
     <canvas id="profile" class="profile" aria-label="Route elevation profile"></canvas>
     <ol class="legs">${legs}</ol>
     <p class="note">Time from Tobler's hiking function on the 30 m DEM; mapped tracks and paths only (A*). Allow extra time for rough tracks, breaks and route-finding.</p>
