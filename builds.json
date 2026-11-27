@@ -1,0 +1,1469 @@
+{
+  "builds": [
+    {
+      "version": "0.1.13",
+      "file": "apk/topo-globe-0.1.13.apk",
+      "bytes": 4700046,
+      "sha256": "e449c70e608243363d7a89737fa41e25ca3cd12c176e393715bf88e4309aca7d",
+      "date": "2026-11-27T13:53:46.530Z",
+      "commit": "a853f243163edcfde3dd3d4c69d2b3dbf8658062",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/46009978395",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.63 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id 02ec4130… → 374f1059…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.13/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.13/android/02-globe.png",
+          "donecheck/0.1.13/android/03-file-picker.png",
+          "donecheck/0.1.13/android/04-region-loaded.png",
+          "donecheck/0.1.13/android/05-terrain-contours.png",
+          "donecheck/0.1.13/android/06-gps-fix.png",
+          "donecheck/0.1.13/android/07-waypoint.png",
+          "donecheck/0.1.13/android/08-measure-profile.png",
+          "donecheck/0.1.13/android/09-route.png",
+          "donecheck/0.1.13/android/10-after-reboot-waypoints.png"
+        ]
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.63 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7593 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.13/browser/01-welcome-menu.png",
+          "donecheck/0.1.13/browser/02-globe.png",
+          "donecheck/0.1.13/browser/03-region-loaded.png",
+          "donecheck/0.1.13/browser/04-terrain-contours.png",
+          "donecheck/0.1.13/browser/05-gps-fix.png",
+          "donecheck/0.1.13/browser/06-waypoint.png",
+          "donecheck/0.1.13/browser/07-measure-profile.png",
+          "donecheck/0.1.13/browser/08-route.png",
+          "donecheck/0.1.13/browser/09-after-restart-waypoints.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.12",
+      "file": "apk/topo-globe-0.1.12.apk",
+      "bytes": 4699906,
+      "sha256": "c7e6c1b5f667098ff1aa02fca403f28a57372dce01851c1007141d5342ca0a1a",
+      "date": "2026-11-27T12:53:01.516Z",
+      "commit": "597f71c63cf3c452e93b8bc58c38f5a374faa40e",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/46001018876",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id a8e6cca6… → ee7a14d9…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.12/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.12/android/02-globe.png",
+          "donecheck/0.1.12/android/03-file-picker.png",
+          "donecheck/0.1.12/android/04-region-loaded.png",
+          "donecheck/0.1.12/android/05-terrain-contours.png",
+          "donecheck/0.1.12/android/06-gps-fix.png",
+          "donecheck/0.1.12/android/07-waypoint.png",
+          "donecheck/0.1.12/android/08-measure-profile.png",
+          "donecheck/0.1.12/android/09-route.png",
+          "donecheck/0.1.12/android/10-after-reboot-waypoints.png"
+        ]
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.12/browser/01-welcome-menu.png",
+          "donecheck/0.1.12/browser/02-globe.png",
+          "donecheck/0.1.12/browser/03-region-loaded.png",
+          "donecheck/0.1.12/browser/03b-fly-attempt-1.png",
+          "donecheck/0.1.12/browser/04-terrain-contours.png",
+          "donecheck/0.1.12/browser/05-gps-fix.png",
+          "donecheck/0.1.12/browser/06-waypoint.png",
+          "donecheck/0.1.12/browser/07-measure-profile.png",
+          "donecheck/0.1.12/browser/08-route.png",
+          "donecheck/0.1.12/browser/09-after-restart-waypoints.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.11",
+      "file": "apk/topo-globe-0.1.11.apk",
+      "bytes": 4699906,
+      "sha256": "da445ee33e11bf4e6fdbf1c9b9c5691583dee2fa3cb78df35c43902258f99641",
+      "date": "2026-11-27T12:30:26.510Z",
+      "commit": "4a1a1b1318a8289db0e968329c1d060fdfaa8971",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/45998147694",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id 55442b2b… → 8fe23dba…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.11/android/01-launch-welcome-menu.png",
+          "donecheck/0.1.11/android/02-globe.png",
+          "donecheck/0.1.11/android/03-file-picker.png",
+          "donecheck/0.1.11/android/04-region-loaded.png",
+          "donecheck/0.1.11/android/05-terrain-contours.png",
+          "donecheck/0.1.11/android/06-gps-fix.png",
+          "donecheck/0.1.11/android/07-waypoint.png",
+          "donecheck/0.1.11/android/08-measure-profile.png",
+          "donecheck/0.1.11/android/09-route.png",
+          "donecheck/0.1.11/android/10-after-reboot-waypoints.png"
+        ]
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": [
+          "donecheck/0.1.11/browser/01-welcome-menu.png",
+          "donecheck/0.1.11/browser/02-globe.png",
+          "donecheck/0.1.11/browser/03-region-loaded.png",
+          "donecheck/0.1.11/browser/04-terrain-contours.png",
+          "donecheck/0.1.11/browser/05-gps-fix.png",
+          "donecheck/0.1.11/browser/06-waypoint.png",
+          "donecheck/0.1.11/browser/07-measure-profile.png",
+          "donecheck/0.1.11/browser/08-route.png",
+          "donecheck/0.1.11/browser/09-after-restart-waypoints.png"
+        ]
+      }
+    },
+    {
+      "version": "0.1.10",
+      "file": "apk/topo-globe-0.1.10.apk",
+      "bytes": 4699906,
+      "sha256": "16449677d3d5816868c0a93703de0cca75af4b4530f102ebe29b96561f95dfab",
+      "date": "2026-11-27T12:21:21.794Z",
+      "commit": "0d8680e93f6f87e376e529c5709b41a6d84e07a7",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/45996671971",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id b6bbff5d… → e2b7ec14…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": []
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": []
+      }
+    },
+    {
+      "version": "0.1.9",
+      "file": "apk/topo-globe-0.1.9.apk",
+      "bytes": 4699906,
+      "sha256": "e5e11c1958ef26833d0dde95ca42ddcc5e855d069f2ca57f6b7244c98d232891",
+      "date": "2026-11-27T12:10:14.353Z",
+      "commit": "9e58c419db718cdba2d1040dcdc51917b77090a3",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/45994681857",
+      "android": {
+        "status": "failure",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "done-check ran to completion",
+            "ok": false,
+            "detail": "map tap at 145.3745, -37.8722 not registered after 2 attempts"
+          }
+        ],
+        "shots": []
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": []
+      }
+    },
+    {
+      "version": "0.1.8",
+      "file": "apk/topo-globe-0.1.8.apk",
+      "bytes": 4699906,
+      "sha256": "0d8f727075efde71697dc13b580c66c9221e722a92d21708120b8ea11e63d67c",
+      "date": "2026-11-27T11:55:55.287Z",
+      "commit": "ac0cd0e69e9904891f8dde47ae5a2f56ab8b2ff4",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/45993314737",
+      "android": {
+        "status": "failure",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "done-check ran to completion",
+            "ok": false,
+            "detail": "page.waitForFunction: Timeout 120000ms exceeded."
+          }
+        ],
+        "shots": []
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": []
+      }
+    },
+    {
+      "version": "0.1.7",
+      "file": "apk/topo-globe-0.1.7.apk",
+      "bytes": 4699870,
+      "sha256": "49ebfcea403a9972ef35104e9e99843297cbdc54f56183cbac9ccdb669da3720",
+      "date": "2026-11-27T11:45:04.573Z",
+      "commit": "1fddff1c313fb22c319a74e25e69c40d694556b6",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/45991875780",
+      "android": {
+        "status": "failure",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "done-check ran to completion",
+            "ok": false,
+            "detail": "page.waitForFunction: Timeout 120000ms exceeded."
+          }
+        ],
+        "shots": []
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": []
+      }
+    },
+    {
+      "version": "0.1.6",
+      "file": "apk/topo-globe-0.1.6.apk",
+      "bytes": 4699450,
+      "sha256": "ae984b7e2a16e3ac383e697e89de38a146a41e2f3f54b6c3c6233054ad27405d",
+      "date": "2026-11-09T05:00:29.994Z",
+      "commit": "64cd0d574d05c29cde1c8503c6aca97435c54525",
+      "branch": "ccr-b4fed5af-s3mplh",
+      "run": "https://github.com/SamPlatypus/Topo-Globe/actions/runs/42564024399",
+      "android": {
+        "status": "success",
+        "results": [
+          {
+            "name": "APK has no INTERNET permission",
+            "ok": true,
+            "detail": "requested: android.permission.ACCESS_FINE_LOCATION, android.permission.ACCESS_COARSE_LOCATION"
+          },
+          {
+            "name": "phone is in airplane mode",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "app opens to the globe",
+            "ok": true,
+            "detail": "{\"p\":\"globe\",\"z\":1.4}"
+          },
+          {
+            "name": "region chosen in the Android file picker",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain shows",
+            "ok": true,
+            "detail": "pitch 60"
+          },
+          {
+            "name": "10 m contours show",
+            "ok": true,
+            "detail": "1109 features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±5 m at -37.85710, 145.35570 (gps)"
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; ↑349 m ↓79 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "phone restarted",
+            "ok": true,
+            "detail": "adb reboot; kernel boot id daa48144… → 31b5076e…"
+          },
+          {
+            "name": "still in airplane mode after reboot",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "after a reboot the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          }
+        ],
+        "shots": []
+      },
+      "browser": {
+        "status": "success",
+        "results": [
+          {
+            "name": "menu open at launch with welcome line",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "first tap folds the menu to the dots",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "opens on the 3D globe",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "region file loads",
+            "ok": true,
+            "detail": "S38E145 Melbourne East & Yarra Ranges 7.61 MiB"
+          },
+          {
+            "name": "tapping the loaded region flies into the 3D map",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "3D terrain is on",
+            "ok": true,
+            "detail": "pitch 60, zoom 14.2"
+          },
+          {
+            "name": "10 m contours drawn on the device",
+            "ok": true,
+            "detail": "1109 contour features, levels 40,60,80,100,120,140,150,160,180,190,200,210"
+          },
+          {
+            "name": "tracks and roads shown",
+            "ok": true,
+            "detail": "7502 road/track features"
+          },
+          {
+            "name": "GPS gets a fix",
+            "ok": true,
+            "detail": "±7 m at -37.85710, 145.35570"
+          },
+          {
+            "name": "accuracy circle and position drawn",
+            "ok": true,
+            "detail": ""
+          },
+          {
+            "name": "waypoint drops",
+            "ok": true,
+            "detail": "WP 1 at -37.85710, 145.35570, 577 m (gps)"
+          },
+          {
+            "name": "measured line shows its elevation profile",
+            "ok": true,
+            "detail": "2.77 km; 186 samples; ↑349 m ↓79 m; 296–584 m"
+          },
+          {
+            "name": "walking route plans",
+            "ok": true,
+            "detail": "4.35 km · 1 h 16 min; 79 points; via Caterpillar Track → Range Road → Olinda Crescent → Mount Dandenong Tourist Road → Perrins Creek Road"
+          },
+          {
+            "name": "after a restart the waypoint is still there",
+            "ok": true,
+            "detail": "waypoints: WP 1; regions: S38E145"
+          },
+          {
+            "name": "no network requests to other origins",
+            "ok": true,
+            "detail": ""
+          }
+        ],
+        "shots": []
+      }
+    }
+  ]
+}
