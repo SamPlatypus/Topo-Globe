@@ -11,8 +11,9 @@ Only real, mapped features are used.  Nothing is derived from elevation.
 
 Roads/tracks keep their topology: ways are cut at junction nodes into edges
 that share node indices, so the phone can route on them.  Edges that cross the
-region boundary are kept whole (one node outside), so the same boundary node
-appears in both neighbouring region files and routes join up across edges.
+region boundary are kept whole (one node outside), and the nodes on both sides
+of the boundary are never simplified away, so the same two vertices appear in
+both neighbouring region files and routes join up across edges.
 """
 import argparse, json, math, sys
 from collections import defaultdict
@@ -193,41 +194,43 @@ def load_osm(path, W, S, E, N):
             nodes = [(n.ref, n.location.lon, n.location.lat) for n in o.nodes]
         except osmium.InvalidLocationError:
             continue
-        inside = [W <= x <= E and S <= y <= N for _, x, y in nodes]
-        if not any(inside):
-            # a way can still cross the region without a node inside: test segments
-            crosses = False
-            rect = box(W, S, E, N)
-            for k in range(len(nodes) - 1):
-                if LineString([nodes[k][1:], nodes[k + 1][1:]]).intersects(rect):
-                    crosses = True
-                    break
-            if not crosses:
-                continue
-            inside = [True] * len(nodes)  # keep whole way piece (rare: long segment through a corner)
-        # keep runs of inside nodes plus one outside neighbour on each side
-        keep = [False] * len(nodes)
-        for k, ins in enumerate(inside):
-            if ins:
-                keep[k] = True
-                if k > 0:
-                    keep[k - 1] = True
-                if k + 1 < len(nodes):
-                    keep[k + 1] = True
-        run = []
-        for k, kp in enumerate(keep):
-            if kp:
-                run.append(nodes[k])
-            elif run:
-                if len(run) >= 2:
-                    ways.append((c, run))
-                run = []
-        if len(run) >= 2:
+        for run in cut_runs(nodes, W, S, E, N):
             ways.append((c, run))
     return ways, pois
 
 
-def build_graph(ways, lat0):
+def cut_runs(nodes, W, S, E, N):
+    """Pieces of one way that belong in this region: runs of inside nodes plus one
+    outside neighbour on each side.  nodes: [(node_id, lon, lat), ...]."""
+    inside = [W <= x <= E and S <= y <= N for _, x, y in nodes]
+    if not any(inside):
+        # a way can still cross the region without a node inside: test segments
+        rect = box(W, S, E, N)
+        if not any(LineString([nodes[k][1:], nodes[k + 1][1:]]).intersects(rect) for k in range(len(nodes) - 1)):
+            return []
+        return [list(nodes)]  # keep whole way piece (rare: long segment through a corner)
+    keep = [False] * len(nodes)
+    for k, ins in enumerate(inside):
+        if ins:
+            keep[k] = True
+            if k > 0:
+                keep[k - 1] = True
+            if k + 1 < len(nodes):
+                keep[k + 1] = True
+    runs, run = [], []
+    for k, kp in enumerate(keep):
+        if kp:
+            run.append(nodes[k])
+        elif run:
+            if len(run) >= 2:
+                runs.append(run)
+            run = []
+    if len(run) >= 2:
+        runs.append(run)
+    return runs
+
+
+def build_graph(ways, lat0, bbox=None):
     """Cut ways into junction-to-junction edges, simplify each edge, then merge
     edges with identical attributes through simple (degree-2) nodes into chains.
 
@@ -235,12 +238,32 @@ def build_graph(ways, lat0):
     coordinate equality: every junction is emitted with identical coordinates in
     every chain that uses it, and distinct OSM nodes are guaranteed never to share
     a quantised coordinate (collisions are nudged by one unit).
+
+    Region edges (bbox = west, south, east, north): where a piece leaves the
+    region, the outside end node AND the inside node next to it are both kept
+    as vertices (never simplified away).  The neighbouring region's file keeps
+    the same two nodes from its side, so the two files share exact vertices at
+    every crossing and the router joins them.  These boundary nodes also claim
+    their grid cells first, in node-id order, so a collision nudge elsewhere in
+    one file can never move them.
     """
     use = defaultdict(int)
+    edge_nodes = {}  # node id -> node, for the nodes either side of the region boundary
+
+    def outside(n):
+        W, S, E, N = bbox
+        return not (W <= n[1] <= E and S <= n[2] <= N)
+
     for _, run in ways:
         ids = [n[0] for n in run]
         for k, nid in enumerate(ids):
             use[nid] += 1 if 0 < k < len(ids) - 1 else 2
+        if bbox is not None:
+            for end, nxt in ((0, 1), (len(run) - 1, len(run) - 2)):
+                if outside(run[end]):
+                    edge_nodes[run[end][0]] = run[end]
+                    edge_nodes[run[nxt][0]] = run[nxt]
+                    use[run[nxt][0]] += 2  # a vertex of its own: DP may not drop it
     # quantise with collision avoidance
     qpos = {}
     taken = {}
@@ -258,6 +281,9 @@ def build_graph(ways, lat0):
         taken[(x, y)] = nid
         qpos[nid] = (x, y)
         return (x, y)
+
+    for nid in sorted(edge_nodes):
+        qnode(edge_nodes[nid])
 
     edges = []  # (attr, nodeA, nodeB, [interior quantised pts])
     for attr, run in ways:
@@ -450,7 +476,7 @@ def main():
     W, S, E, N = map(float, a.bbox.split(','))
     lat0 = (S + N) / 2
     ways, osm_pois = load_osm(a.osm, W, S, E, N)
-    njunc, chains = build_graph(ways, lat0)
+    njunc, chains = build_graph(ways, lat0, (W, S, E, N))
     print(f'OSM: {len(ways)} way pieces -> {njunc} junction nodes, {len(chains)} chains, '
           f'{sum(len(e["p"]) for e in chains)} points, {len(osm_pois)} POIs', file=sys.stderr)
     lines, areas, vic_pois = load_vicmap(a.vicmap_prefix, W, S, E, N, lat0)

@@ -49,6 +49,8 @@ jobs:
           sudo apt-get install -y -q osmium-tool
           python -m pip install --quiet -r pipeline/requirements.txt
           npm ci --no-audit --no-fund
+      - name: Pipeline tests
+        run: python -m unittest discover -s pipeline -p 'test_*.py' -v
       - name: Which regions
         id: ids
         run: |
