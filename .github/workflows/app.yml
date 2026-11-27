@@ -194,6 +194,20 @@ jobs:
         run: |
           if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
             gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '"Pages: " + .html_url + " (" + (.status // "pending") + ")"'
+            # a push made with the workflow token does not start a Pages deployment by itself: request one,
+            # then wait until the live site serves this version (the CDN may lag a few minutes more)
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" --jq '"Pages build requested: " + .status' \
+              || echo "::warning::Could not request a GitHub Pages build"
+            URL=$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .html_url)
+            for i in $(seq 1 40); do
+              sleep 15
+              STATE=$(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" --jq .status 2>/dev/null || echo unknown)
+              LIVE=$(curl -fsS "${URL}builds.json?v=${{ needs.build.outputs.version }}-$i" 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).builds[0].version)}catch{console.log("?")}})')
+              echo "Pages build: ${STATE}; live site newest APK: ${LIVE}"
+              if [ "$LIVE" = "${{ needs.build.outputs.version }}" ]; then echo "Live: ${URL}"; break; fi
+              if [ "$STATE" = "errored" ]; then echo "::warning::GitHub Pages build errored"; break; fi
+            done
+            [ "$LIVE" = "${{ needs.build.outputs.version }}" ] || echo "::warning::The live download page does not show ${{ needs.build.outputs.version }} yet"
           else
             gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" -f "source[branch]=gh-pages" -f "source[path]=/" --jq .html_url \
               || echo "::warning::Could not enable GitHub Pages automatically. In the repository Settings > Pages, set Source: Deploy from a branch, gh-pages / (root)."
